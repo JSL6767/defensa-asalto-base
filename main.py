@@ -8,7 +8,7 @@ def main():
     root = tk.Tk()
     root.title("Defensa y Asalto de Base")
     root.geometry("700x600")
-    root.configure(bg="#1a1a2e")
+    root.configure(bg="black")
     root.resizable(False, False)
 
     LoginView(root, iniciar_juego)
