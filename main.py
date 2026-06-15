@@ -1,18 +1,29 @@
 import tkinter as tk
+#Importamos ventanas creadas
 from Vista.login_view import LoginView
+from Vista.seleccion_faccion_view import SeleccionFaccionView
 
-def iniciar_juego(jugador1, jugador2):
-    print(f"Partida iniciada: {jugador1['nombre']} vs {jugador2['nombre']}")
+def despues_de_facciones(jugador1, jugador2, faccion1, faccion2):
+    # La funcion se ejecuta cuando ambos jugadores eligen facción
+    #Por ahora imprime, despues irá el mapa
+    print(f"{jugador1['nombre']} eligió {faccion1}")
+    print(f"{jugador2['nombre']} eligió {faccion2}")
+
+def despues_del_login(jugador1, jugador2):
+    #Se ejecuta cuando los jugadores inician sesión correctamente
+    # Después del login abre la ventana de selección de facciones
+    SeleccionFaccionView(root, jugador1, jugador2, despues_de_facciones)
 
 def main():
-    root = tk.Tk()
-    root.title("Defensa y Asalto de Base")
-    root.geometry("700x600")
-    root.configure(bg="black")
-    root.resizable(False, False)
+    global root #global para usarlo en demás funciones
+    root = tk.Tk()  #crea ventana principal
+    root.title("Defensa y Asalto de Base")  #título 
+    root.geometry("700x800")  #tamaño
+    root.configure(bg="#1a1a2e") #color de fondo
+    root.resizable(False, False)  #no se cambia el tamaño
 
-    LoginView(root, iniciar_juego)
-    root.mainloop()
+    LoginView(root, despues_del_login) #abre el login, le pasa la ventana y el callback
+    root.mainloop() #mantiene abierta la ventana
 
-if __name__ == "__main__":
+if __name__ == "__main__":   #solo ejecuta main() 
     main()
