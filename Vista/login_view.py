@@ -30,18 +30,18 @@ class LoginView:
         ).pack(pady=30)
 
         # Panel jugador 1
-        self._panel_jugador("Jugador 1", "#16213e", self._login_jugador1, self._registro_jugador1)
+        self._panel_jugador("Jugador 1", "blue", self._login_jugador1, self._registro_jugador1)
 
         # Panel jugador 2
-        self._panel_jugador("Jugador 2", "#0f3460", self._login_jugador2, self._registro_jugador2)
+        self._panel_jugador("Jugador 2", "blue", self._login_jugador2, self._registro_jugador2)
 
         # Botón iniciar partida
         self.btn_iniciar = tk.Button(
             self.frame,
             text="Iniciar Partida",
             font=("Arial", 14, "bold"),
-            bg="#c9a84c",
-            fg="#1a1a2e",
+            bg="yellow",
+            fg="black",
             state="disabled",
             command=self._iniciar_partida,
             padx=20,
@@ -87,7 +87,7 @@ class LoginView:
             frame_botones,
             text="Iniciar Sesión",
             font=("Arial", 10),
-            bg="#e94560",
+            bg="red",
             fg="white",
             command=cmd_login,
             padx=10
@@ -97,7 +97,7 @@ class LoginView:
             frame_botones,
             text="Registrarse",
             font=("Arial", 10),
-            bg="#533483",
+            bg="purple",
             fg="white",
             command=cmd_registro,
             padx=10
@@ -114,7 +114,7 @@ class LoginView:
         jugador = iniciar_sesion(nombre, contra)
         if jugador:
             self.jugador1 = jugador
-            self.label_estado1.config(text=f"✔ {nombre} conectado", fg="#6bff6b")
+            self.label_estado1.config(text=f"✔ {nombre} conectado", fg="green")
             self._verificar_ambos_listos()
         else:
             messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
@@ -134,7 +134,7 @@ class LoginView:
         jugador = iniciar_sesion(nombre, contra)
         if jugador:
             self.jugador2 = jugador
-            self.label_estado2.config(text=f"✔ {nombre} conectado", fg="#6bff6b")
+            self.label_estado2.config(text=f" {nombre} conectado", fg="green")
             self._verificar_ambos_listos()
         else:
             messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
