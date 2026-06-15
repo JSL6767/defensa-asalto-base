@@ -1,3 +1,16 @@
 {
-    "jugadores": []
+    "jugadores": [
+        {
+            "nombre": "Imanol",
+            "contrasena": "5678",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
+        },
+        {
+            "nombre": "Julian",
+            "contrasena": "1234",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
+        }
+    ]
 }
