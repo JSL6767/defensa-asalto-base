@@ -11,6 +11,18 @@
             "contrasena": "1234",
             "victorias_defensor": 0,
             "victorias_atacante": 0
+        },
+        {
+            "nombre": "julian2",
+            "contrasena": "1234",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
+        },
+        {
+            "nombre": "nigga",
+            "contrasena": "1234",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
         }
     ]
 }
