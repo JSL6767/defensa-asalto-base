@@ -23,6 +23,30 @@
             "contrasena": "1234",
             "victorias_defensor": 0,
             "victorias_atacante": 0
+        },
+        {
+            "nombre": "julian23",
+            "contrasena": "123",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
+        },
+        {
+            "nombre": "julian24",
+            "contrasena": "123",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
+        },
+        {
+            "nombre": "2",
+            "contrasena": "2",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
+        },
+        {
+            "nombre": "1",
+            "contrasena": "1",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
         }
     ]
 }
