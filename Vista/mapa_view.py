@@ -6,7 +6,7 @@ from Clases.torres import TorreBasica, TorrePesada, TorreMagica
 from Clases.muro import Muro
 
 # Tamaño de cada casilla en píxeles
-TAMANIO_CASILLA = 50
+TAMANIO_CASILLA = 45
 FILAS = 12
 COLUMNAS = 12
 
@@ -20,7 +20,21 @@ COLORES = {
     "torre_magica":  "#9b59b6",  # torre mágica
     "unidad":  "#e74c3c",  # unidades atacantes
 }
-
+def obtener_colores_faccion(faccion):
+        # Retorna color de torre, muro y base según la facción
+            if faccion == "Reino":
+                color_torre = "#c9a84c"
+                color_muro  = "#a07830"
+                color_base  = "#c9a84c"
+            elif faccion == "Oscura":
+                color_torre = "#7b2d8b"
+                color_muro  = "#4a1a5a"
+                color_base  = "#7b2d8b"
+            elif faccion == "Bosque":
+                color_torre = "#2d8b3b"
+                color_muro  = "#1a5a25"
+                color_base  = "#2d8b3b"
+            return color_torre, color_muro, color_base
 class MapaView:
     def __init__(self, root, jugador1, jugador2, faccion1, faccion2, callback_fin_construccion):
         self.root = root
@@ -182,10 +196,11 @@ class MapaView:
 
         # Redibujamos el mapa
         self._dibujar_mapa()
-
+    
     def _dibujar_mapa(self):
-        # Borra todo y redibuja cada casilla
         self.canvas.delete("all")
+        # Obtenemos los colores de la facción del defensor
+        color_torre, color_muro, color_base = obtener_colores_faccion(self.faccion1)
 
         for fila in range(FILAS):
             for col in range(COLUMNAS):
@@ -194,35 +209,27 @@ class MapaView:
                 x2 = x1 + TAMANIO_CASILLA
                 y2 = y1 + TAMANIO_CASILLA
 
-                # Determinamos el color de la casilla
                 if fila == self.fila_base and col == self.columna_base:
-                    color = COLORES["base"]  # base central
+                    color = color_base
+                    texto = "BASE"
                 elif self.mapa[fila][col] is not None:
                     objeto = self.mapa[fila][col]
-                    # Color según el tipo de objeto
                     if isinstance(objeto, Muro):
-                        color = COLORES["muro"]
-                    elif isinstance(objeto, TorreBasica):
-                        color = COLORES["torre_basica"]
-                    elif isinstance(objeto, TorrePesada):
-                        color = COLORES["torre_pesada"]
-                    elif isinstance(objeto, TorreMagica):
-                        color = COLORES["torre_magica"]
+                        color = color_muro
+                        texto = "MUR"
+                    else:
+                        color = color_torre
+                        texto = objeto.nombre[:3].upper()
                 else:
-                    color = COLORES["vacio"]  # casilla vacía
+                    color = "#2d2d44"
+                    texto = ""
 
-                # Dibuja la casilla
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#1a1a2e", width=1)
-
-                # Texto corto encima de la casilla
-                if fila == self.fila_base and col == self.columna_base:
-                    self.canvas.create_text(x1+25, y1+25, text="BASE", fill="white", font=("Arial", 7, "bold"))
-                elif self.mapa[fila][col] is not None:
-                    objeto = self.mapa[fila][col]
-                    texto = objeto.nombre[:3].upper()  # primeras 3 letras
+                if texto:
                     self.canvas.create_text(x1+25, y1+25, text=texto, fill="white", font=("Arial", 7, "bold"))
 
     def _terminar_construccion(self):
         # Termina la fase de construcción y pasa a la fase de ataque
         self.frame.destroy()
         self.callback_fin_construccion(self.mapa, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base)
+    

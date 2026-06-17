@@ -5,7 +5,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Clases.torres import TorreBasica, TorrePesada, TorreMagica
 from Clases.muro import Muro
 from Clases.unidades import Soldado, Tanque, UnidadRapida
-from sistema_archivos import actualizar_victorias
 
 TAMANIO_CASILLA = 45
 FILAS = 12
@@ -13,16 +12,25 @@ COLUMNAS = 12
 FILA_BASE = 5
 COLUMNA_BASE = 1
 
-# Colores para dibujar
-COLORES_OBJETOS = {
-    Muro:         ("#7f8c8d", "MUR"),
-    TorreBasica:  ("#3498db", "TBA"),
-    TorrePesada:  ("#e67e22", "TPE"),
-    TorreMagica:  ("#9b59b6", "TMA"),
-    Soldado:      ("#27ae60", "SOL"),
-    Tanque:       ("#c0392b", "TAN"),
-    UnidadRapida: ("#f39c12", "RAP"),
-}
+def obtener_colores_faccion(faccion):
+    # Retorna color de torre, muro y base según la facción
+    if faccion == "Reino":
+        color_torre = "#c9a84c"
+        color_muro  = "#a07830"
+        color_base  = "#c9a84c"
+    elif faccion == "Oscura":
+        color_torre = "#7b2d8b"
+        color_muro  = "#4a1a5a"
+        color_base  = "#7b2d8b"
+    elif faccion == "Bosque":
+        color_torre = "#2d8b3b"
+        color_muro  = "#1a5a25"
+        color_base  = "#2d8b3b"
+    else:
+        color_torre = "#3498db"
+        color_muro  = "#7f8c8d"
+        color_base  = "#e74c3c"
+    return color_torre, color_muro, color_base
 
 class CombateView:
     def __init__(self, root, mapa, unidades, jugador1, jugador2, faccion1, faccion2, vida_base, callback_fin_ronda):
@@ -31,8 +39,8 @@ class CombateView:
         self.unidades = unidades            # lista de unidades del atacante
         self.jugador1 = jugador1            # defensor
         self.jugador2 = jugador2            # atacante
-        self.faccion1 = faccion1
-        self.faccion2 = faccion2
+        self.faccion1 = faccion1            # facción del defensor
+        self.faccion2 = faccion2            # facción del atacante
         self.vida_base = vida_base          # vida de la base central
         self.callback_fin_ronda = callback_fin_ronda
         self.turno = 0                      # contador de turnos
@@ -44,26 +52,66 @@ class CombateView:
 
     def _construir_ui(self):
         # Título
-        tk.Label(self.frame, text="⚔ Combate ⚔", font=("Arial", 16, "bold"), bg="#1a1a2e", fg="#e74c3c").pack(pady=10)
+        tk.Label(
+            self.frame,
+            text="⚔ Combate ⚔",
+            font=("Arial", 16, "bold"),
+            bg="#1a1a2e",
+            fg="#e74c3c"
+        ).pack(pady=10)
 
-        # Info de vida de la base
-        self.label_base = tk.Label(self.frame, text=f"Vida de la base: {self.vida_base}", font=("Arial", 12), bg="#1a1a2e", fg="white")
+        # Vida de la base
+        self.label_base = tk.Label(
+            self.frame,
+            text=f"Vida de la base: {self.vida_base}",
+            font=("Arial", 12),
+            bg="#1a1a2e",
+            fg="white"
+        )
         self.label_base.pack()
 
-        # Info de turno
-        self.label_turno = tk.Label(self.frame, text=f"Turno: {self.turno}", font=("Arial", 12), bg="#1a1a2e", fg="#c9a84c")
+        # Turno actual
+        self.label_turno = tk.Label(
+            self.frame,
+            text=f"Turno: {self.turno}",
+            font=("Arial", 12),
+            bg="#1a1a2e",
+            fg="#c9a84c"
+        )
         self.label_turno.pack()
 
         # Log de eventos
-        self.log = tk.Text(self.frame, height=4, width=60, bg="#16213e", fg="white", font=("Arial", 9), state="disabled")
+        self.log = tk.Text(
+            self.frame,
+            height=3,
+            width=60,
+            bg="#16213e",
+            fg="white",
+            font=("Arial", 9),
+            state="disabled"
+        )
         self.log.pack(pady=5)
 
         # Canvas del mapa
-        self.canvas = tk.Canvas(self.frame, width=COLUMNAS*TAMANIO_CASILLA, height=FILAS*TAMANIO_CASILLA, bg="#2d2d44", highlightthickness=0)
+        self.canvas = tk.Canvas(
+            self.frame,
+            width=COLUMNAS * TAMANIO_CASILLA,
+            height=FILAS * TAMANIO_CASILLA,
+            bg="#2d2d44",
+            highlightthickness=0
+        )
         self.canvas.pack(pady=5)
 
         # Botón para iniciar el combate
-        self.btn_iniciar = tk.Button(self.frame, text="Iniciar Combate", font=("Arial", 12, "bold"), bg="#e74c3c", fg="white", command=self._iniciar_combate, padx=15, pady=8)
+        self.btn_iniciar = tk.Button(
+            self.frame,
+            text="Iniciar Combate",
+            font=("Arial", 12, "bold"),
+            bg="#e74c3c",
+            fg="white",
+            command=self._iniciar_combate,
+            padx=15, pady=8
+        )
         self.btn_iniciar.pack(pady=10)
 
         self._dibujar_mapa()
@@ -89,7 +137,7 @@ class CombateView:
         self.label_turno.config(text=f"Turno: {self.turno}")
         self._log(f"--- Turno {self.turno} ---")
 
-        # Fase 1: Torres atacan a las unidades en su alcance
+        # Fase 1: Torres atacan unidades
         self._torres_atacan()
 
         # Fase 2: Unidades avanzan y atacan
@@ -113,14 +161,13 @@ class CombateView:
                 if not isinstance(objeto, (TorreBasica, TorrePesada, TorreMagica)):
                     continue
 
-                # Buscamos unidades en el alcance de la torre
+                # Buscamos unidad en el alcance
                 objetivo = self._buscar_objetivo(fila, col, objeto.alcance)
                 if objetivo:
-                    # La torre ataca al objetivo
                     destruida = objetivo.recibir_daño(objeto.daño)
-                    self._log(f"Torre en ({fila},{col}) ataca a {objetivo.nombre} por {objeto.daño}")
+                    self._log(f"Torre ({fila},{col}) ataca {objetivo.nombre} por {objeto.daño}")
 
-                    # Activamos habilidad especial si corresponde
+                    # Activamos habilidad especial
                     if isinstance(objeto, TorrePesada):
                         resultado = objeto.habilidad_especial(self.unidades)
                     else:
@@ -129,12 +176,12 @@ class CombateView:
                         self._log(f"Habilidad: {resultado}")
 
                     if destruida:
-                        self._log(f"{objetivo.nombre} fue eliminado!")
+                        self._log(f"{objetivo.nombre} eliminado!")
                         self.mapa[objetivo.fila][objetivo.columna] = None
                         self.unidades.remove(objetivo)
 
     def _buscar_objetivo(self, fila_torre, col_torre, alcance):
-        # Busca la unidad mas cercana dentro del alcance
+        # Busca la unidad más cercana dentro del alcance
         objetivo_cercano = None
         menor_col = COLUMNAS
 
@@ -147,33 +194,30 @@ class CombateView:
         return objetivo_cercano
 
     def _unidades_avanzan(self):
-        # Cada unidad avanza hacia la base
         for unidad in self.unidades[:]:
             col_anterior = unidad.columna
 
-            # Intentamos mover la unidad
             if not unidad.mover():
                 continue  # estaba congelada
 
             nueva_col = unidad.columna
 
-            # Verificamos si llegó a la base
-            if unidad.fila == FILA_BASE and unidad.columna <= COLUMNA_BASE:
+            # Si llegó a la columna de la base ataca
+            if nueva_col <= COLUMNA_BASE:
                 self.vida_base -= unidad.daño
                 self.label_base.config(text=f"Vida de la base: {self.vida_base}")
-                self._log(f"{unidad.nombre} ataca la BASE por {unidad.daño}! Vida restante: {self.vida_base}")
-                # La unidad se queda en la base
+                self._log(f"{unidad.nombre} ataca BASE por {unidad.daño}! Vida: {self.vida_base}")
                 unidad.columna = COLUMNA_BASE
             else:
-                # Verificamos si chocó con un muro o torre
+                # Verificamos si chocó con algo
                 if self.mapa[unidad.fila][nueva_col] is not None and not isinstance(self.mapa[unidad.fila][nueva_col], type(unidad)):
                     objeto = self.mapa[unidad.fila][nueva_col]
                     destruido = objeto.recibir_daño(unidad.daño)
                     self._log(f"{unidad.nombre} ataca {objeto.nombre} por {unidad.daño}")
                     if destruido:
-                        self._log(f"{objeto.nombre} fue destruido!")
+                        self._log(f"{objeto.nombre} destruido!")
                         self.mapa[unidad.fila][nueva_col] = None
-                    unidad.columna = col_anterior  # no avanza si hay obstaculo
+                    unidad.columna = col_anterior  # no avanza si hay obstáculo
                 else:
                     # Actualiza posición en el mapa
                     self.mapa[unidad.fila][col_anterior] = None
@@ -183,9 +227,7 @@ class CombateView:
         # El atacante gana si destruye la base
         if self.vida_base <= 0:
             self.combate_activo = False
-            self._log("LA BASE FUE DESTRUIDA! Gana el atacante!")
-            messagebox.showinfo("Fin de ronda", f"¡{self.jugador2['nombre']} gana la ronda!")
-            actualizar_victorias(self.jugador2["nombre"], "atacante")
+            self._log("BASE DESTRUIDA! Gana el atacante!")
             self.frame.destroy()
             self.callback_fin_ronda("atacante", self.jugador1, self.jugador2)
             return True
@@ -193,9 +235,7 @@ class CombateView:
         # El defensor gana si no quedan unidades
         if not self.unidades:
             self.combate_activo = False
-            self._log("Todas las unidades fueron eliminadas! Gana el defensor!")
-            messagebox.showinfo("Fin de ronda", f"¡{self.jugador1['nombre']} gana la ronda!")
-            actualizar_victorias(self.jugador1["nombre"], "defensor")
+            self._log("Todas las unidades eliminadas! Gana el defensor!")
             self.frame.destroy()
             self.callback_fin_ronda("defensor", self.jugador1, self.jugador2)
             return True
@@ -204,18 +244,58 @@ class CombateView:
 
     def _dibujar_mapa(self):
         self.canvas.delete("all")
+
+        # Colores según facción del defensor
+        color_torre, color_muro, color_base = obtener_colores_faccion(self.faccion1)
+
+        # Color de unidades según facción del atacante
+        if self.faccion2 == "Reino":
+            color_unidad = "#c9a84c"
+        elif self.faccion2 == "Oscura":
+            color_unidad = "#7b2d8b"
+        elif self.faccion2 == "Bosque":
+            color_unidad = "#2d8b3b"
+        else:
+            color_unidad = "#27ae60"
+
         for fila in range(FILAS):
             for col in range(COLUMNAS):
-                x1, y1 = col * TAMANIO_CASILLA, fila * TAMANIO_CASILLA
-                x2, y2 = x1 + TAMANIO_CASILLA, y1 + TAMANIO_CASILLA
+                x1 = col * TAMANIO_CASILLA
+                y1 = fila * TAMANIO_CASILLA
+                x2 = x1 + TAMANIO_CASILLA
+                y2 = y1 + TAMANIO_CASILLA
                 objeto = self.mapa[fila][col]
 
                 if fila == FILA_BASE and col == COLUMNA_BASE:
-                    color, texto = "#e74c3c", "BASE"
+                    color = color_base
+                    texto = "BASE"
                 elif objeto is None:
-                    color, texto = "#2d2d44", ""
+                    color = "#2d2d44"
+                    texto = ""
+                elif isinstance(objeto, Muro):
+                    color = color_muro
+                    texto = "MUR"
+                elif isinstance(objeto, TorreBasica):
+                    color = color_torre
+                    texto = "TBA"
+                elif isinstance(objeto, TorrePesada):
+                    color = color_torre
+                    texto = "TPE"
+                elif isinstance(objeto, TorreMagica):
+                    color = color_torre
+                    texto = "TMA"
+                elif isinstance(objeto, Soldado):
+                    color = color_unidad
+                    texto = "SOL"
+                elif isinstance(objeto, Tanque):
+                    color = color_unidad
+                    texto = "TAN"
+                elif isinstance(objeto, UnidadRapida):
+                    color = color_unidad
+                    texto = "RAP"
                 else:
-                    color, texto = COLORES_OBJETOS.get(type(objeto), ("#2d2d44", ""))
+                    color = "#2d2d44"
+                    texto = ""
 
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#1a1a2e", width=1)
                 if texto:

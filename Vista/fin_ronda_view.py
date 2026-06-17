@@ -15,7 +15,7 @@ class FinRondaView:
 
         self._construir_ui()
 
-    def _contruir_ui(self):
+    def _construir_ui(self):
         #título
         tk.Label(
             self.frame,
