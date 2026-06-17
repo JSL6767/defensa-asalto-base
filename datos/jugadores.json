@@ -39,13 +39,13 @@
         {
             "nombre": "2",
             "contrasena": "2",
-            "victorias_defensor": 0,
-            "victorias_atacante": 0
+            "victorias_defensor": 2,
+            "victorias_atacante": 1
         },
         {
             "nombre": "1",
             "contrasena": "1",
-            "victorias_defensor": 0,
+            "victorias_defensor": 5,
             "victorias_atacante": 0
         }
     ]

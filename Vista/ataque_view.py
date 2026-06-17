@@ -3,42 +3,58 @@ from tkinter import messagebox
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Clases.unidades import Soldado, Tanque, UnidadRapida
+from Clases.torres import TorreBasica, TorrePesada, TorreMagica
+from Clases.muro import Muro
 
-# Tamaño de casilla igual que el mapa
-TAMANIO_CASILLA = 50
+TAMANIO_CASILLA = 45
 FILAS = 12
 COLUMNAS = 12
+
+def obtener_colores_faccion(faccion):
+    # Retorna color de torre, muro y base según la facción
+    if faccion == "Reino":
+        color_torre = "#c9a84c"
+        color_muro  = "#a07830"
+        color_base  = "#c9a84c"
+    elif faccion == "Oscura":
+        color_torre = "#7b2d8b"
+        color_muro  = "#4a1a5a"
+        color_base  = "#7b2d8b"
+    elif faccion == "Bosque":
+        color_torre = "#2d8b3b"
+        color_muro  = "#1a5a25"
+        color_base  = "#2d8b3b"
+    else:
+        color_torre = "#3498db"
+        color_muro  = "#7f8c8d"
+        color_base  = "#e74c3c"
+    return color_torre, color_muro, color_base
 
 class AtaqueView:
     def __init__(self, root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, callback_combate):
         self.root = root
-        self.mapa = mapa                    # mapa con las torres y muros del defensor
-        self.jugador1 = jugador1            # defensor
-        self.jugador2 = jugador2            # atacante
-        self.faccion1 = faccion1
-        self.faccion2 = faccion2
-        self.vida_base = vida_base          # vida de la base central
-        self.callback_combate = callback_combate  # función para iniciar el combate
-
-        # Lista de unidades colocadas por el atacante
-        self.unidades = []
-
-        # Elemento seleccionado para colocar
-        self.seleccion = None
-
-        # Dinero del atacante
-        self.dinero = 200
+        self.mapa = mapa
+        self.jugador1 = jugador1        # defensor
+        self.jugador2 = jugador2        # atacante
+        self.faccion1 = faccion1        # facción del defensor
+        self.faccion2 = faccion2        # facción del atacante
+        self.vida_base = vida_base
+        self.callback_combate = callback_combate
+        self.unidades = []              # lista de unidades colocadas
+        self.seleccion = None           # unidad seleccionada para colocar
+        self.dinero = 200               # dinero del atacante
+        self.fila_base = 5
+        self.columna_base = 1
 
         self.frame = tk.Frame(root, bg="#1a1a2e")
         self.frame.pack(fill="both", expand=True)
-
         self._construir_ui()
 
     def _construir_ui(self):
         # Título
         tk.Label(
             self.frame,
-            text=f"⚔ Fase de Ataque — {self.jugador2['nombre']} (Atacante)",
+            text=f"Fase de Ataque — {self.jugador2['nombre']}",
             font=("Arial", 14, "bold"),
             bg="#1a1a2e",
             fg="#e74c3c"
@@ -47,7 +63,7 @@ class AtaqueView:
         # Dinero disponible
         self.label_dinero = tk.Label(
             self.frame,
-            text=f"💰 Dinero: {self.dinero}",
+            text=f"Dinero: {self.dinero}",
             font=("Arial", 12),
             bg="#1a1a2e",
             fg="white"
@@ -55,7 +71,20 @@ class AtaqueView:
         self.label_dinero.pack()
 
         # Tienda de unidades
-        self._construir_tienda()
+        tienda = tk.Frame(self.frame, bg="#16213e", padx=10, pady=8)
+        tienda.pack(fill="x", padx=20)
+        tk.Label(tienda, text="Unidades:", bg="#16213e", fg="white", font=("Arial", 11, "bold")).pack(side="left", padx=5)
+
+        tk.Button(tienda, text="Soldado $30", bg="#27ae60", fg="white", font=("Arial", 10),
+            command=lambda: self._seleccionar("soldado")).pack(side="left", padx=5)
+        tk.Button(tienda, text="Tanque $120", bg="#c0392b", fg="white", font=("Arial", 10),
+            command=lambda: self._seleccionar("tanque")).pack(side="left", padx=5)
+        tk.Button(tienda, text="Rapida $60", bg="#f39c12", fg="white", font=("Arial", 10),
+            command=lambda: self._seleccionar("rapida")).pack(side="left", padx=5)
+
+        # Label de selección actual
+        self.label_seleccion = tk.Label(tienda, text="Seleccion: ninguna", bg="#16213e", fg="#c9a84c", font=("Arial", 10))
+        self.label_seleccion.pack(side="left", padx=10)
 
         # Canvas del mapa
         self.canvas = tk.Canvas(
@@ -66,14 +95,12 @@ class AtaqueView:
             highlightthickness=0
         )
         self.canvas.pack(pady=10)
-
-        # Click para colocar unidades
         self.canvas.bind("<Button-1>", self._click_mapa)
 
-        # Botón para iniciar el combate
+        # Botón para iniciar combate
         tk.Button(
             self.frame,
-            text="¡Iniciar Combate!",
+            text="Iniciar Combate!",
             font=("Arial", 12, "bold"),
             bg="#e74c3c",
             fg="white",
@@ -81,35 +108,7 @@ class AtaqueView:
             padx=15, pady=8
         ).pack(pady=10)
 
-        # Dibujamos el mapa con las torres ya colocadas
         self._dibujar_mapa()
-
-    def _construir_tienda(self):
-        tienda = tk.Frame(self.frame, bg="#16213e", padx=10, pady=8)
-        tienda.pack(fill="x", padx=20)
-
-        tk.Label(tienda, text="Unidades:", bg="#16213e", fg="white", font=("Arial", 11, "bold")).pack(side="left", padx=5)
-
-        # Botones de compra de unidades
-        elementos = [
-            ("Soldado $30",       "soldado",  "#27ae60"),
-            ("Tanque $120",       "tanque",   "#c0392b"),
-            ("Rapida $60",        "rapida",   "#f39c12"),
-        ]
-
-        for nombre, tipo, color in elementos:
-            tk.Button(
-                tienda,
-                text=nombre,
-                bg=color,
-                fg="white",
-                font=("Arial", 10),
-                command=lambda t=tipo: self._seleccionar(t)
-            ).pack(side="left", padx=5)
-
-        # Label de selección actual
-        self.label_seleccion = tk.Label(tienda, text="Seleccion: ninguna", bg="#16213e", fg="#c9a84c", font=("Arial", 10))
-        self.label_seleccion.pack(side="left", padx=10)
 
     def _seleccionar(self, tipo):
         # Guarda qué unidad quiere colocar el atacante
@@ -117,27 +116,26 @@ class AtaqueView:
         self.label_seleccion.config(text=f"Seleccion: {tipo}")
 
     def _click_mapa(self, evento):
-        # Calcula en qué casilla hizo click
         col = evento.x // TAMANIO_CASILLA
         fila = evento.y // TAMANIO_CASILLA
 
         if not self.seleccion:
             messagebox.showwarning("Aviso", "Selecciona una unidad primero.")
             return
-
-        # Las unidades solo se pueden colocar en las últimas 3 columnas
         if col < COLUMNAS - 3:
             messagebox.showwarning("Aviso", "Solo puedes colocar unidades en las ultimas 3 columnas.")
             return
-
-        # No se puede colocar sobre torres o muros
         if self.mapa[fila][col] is not None:
             messagebox.showwarning("Aviso", "Ya hay algo en esa casilla.")
             return
 
         # Verificamos el costo
-        costos = {"soldado": 30, "tanque": 120, "rapida": 60}
-        costo = costos[self.seleccion]
+        if self.seleccion == "soldado":
+            costo = 30
+        elif self.seleccion == "tanque":
+            costo = 120
+        elif self.seleccion == "rapida":
+            costo = 60
 
         if self.dinero < costo:
             messagebox.showerror("Sin dinero", "No tienes suficiente dinero.")
@@ -151,23 +149,30 @@ class AtaqueView:
         elif self.seleccion == "rapida":
             unidad = UnidadRapida()
 
-        # Guardamos posición
+        # Guardamos posición y la ponemos en el mapa
         unidad.fila = fila
         unidad.columna = col
         self.unidades.append(unidad)
         self.mapa[fila][col] = unidad
-
-        # Descontamos el dinero
         self.dinero -= costo
-        self.label_dinero.config(text=f"💰 Dinero: {self.dinero}")
-
+        self.label_dinero.config(text=f"Dinero: {self.dinero}")
         self._dibujar_mapa()
 
     def _dibujar_mapa(self):
-        from Clases.torres import TorreBasica, TorrePesada, TorreMagica
-        from Clases.muro import Muro
-
         self.canvas.delete("all")
+
+        # Colores según facción del defensor
+        color_torre, color_muro, color_base = obtener_colores_faccion(self.faccion1)
+
+        # Color de unidades según facción del atacante
+        if self.faccion2 == "Reino":
+            color_unidad = "#c9a84c"
+        elif self.faccion2 == "Oscura":
+            color_unidad = "#7b2d8b"
+        elif self.faccion2 == "Bosque":
+            color_unidad = "#2d8b3b"
+        else:
+            color_unidad = "#27ae60"
 
         for fila in range(FILAS):
             for col in range(COLUMNAS):
@@ -175,40 +180,37 @@ class AtaqueView:
                 y1 = fila * TAMANIO_CASILLA
                 x2 = x1 + TAMANIO_CASILLA
                 y2 = y1 + TAMANIO_CASILLA
-
                 objeto = self.mapa[fila][col]
 
-                # Color según el contenido
-                if fila == 5 and col == 1:
-                    color = "#e74c3c"    # base
+                if fila == self.fila_base and col == self.columna_base:
+                    color = color_base
                     texto = "BASE"
                 elif objeto is None:
-                    # Zona de ataque destacada
                     if col >= COLUMNAS - 3:
-                        color = "#1a3a1a"  # zona donde puede colocar unidades
+                        color = "#1a3a1a"  # zona de ataque
                     else:
                         color = "#2d2d44"  # zona normal
                     texto = ""
                 elif isinstance(objeto, Muro):
-                    color = "#7f8c8d"
+                    color = color_muro
                     texto = "MUR"
                 elif isinstance(objeto, TorreBasica):
-                    color = "#3498db"
+                    color = color_torre
                     texto = "TBA"
                 elif isinstance(objeto, TorrePesada):
-                    color = "#e67e22"
+                    color = color_torre
                     texto = "TPE"
                 elif isinstance(objeto, TorreMagica):
-                    color = "#9b59b6"
+                    color = color_torre
                     texto = "TMA"
                 elif isinstance(objeto, Soldado):
-                    color = "#27ae60"
+                    color = color_unidad
                     texto = "SOL"
                 elif isinstance(objeto, Tanque):
-                    color = "#c0392b"
+                    color = color_unidad
                     texto = "TAN"
                 elif isinstance(objeto, UnidadRapida):
-                    color = "#f39c12"
+                    color = color_unidad
                     texto = "RAP"
                 else:
                     color = "#2d2d44"
@@ -222,7 +224,5 @@ class AtaqueView:
         if not self.unidades:
             messagebox.showwarning("Aviso", "Debes colocar al menos una unidad.")
             return
-
-        # Pasa el mapa y las unidades al combate
         self.frame.destroy()
         self.callback_combate(self.mapa, self.unidades, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base)
