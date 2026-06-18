@@ -5,7 +5,7 @@ class Juego:
         self.ronda_actual = 1 #ronda actual que se encuentran
         self.victorias_defensor = 0 #rondas ganadas por defensor
         self.victorias_atacante = 0 #rondas ganadas por el atacante
-        self.dinero_inicial = 200 #dinero que reciben los jugadores por ronda
+        self.dinero_inicial = 1000 #dinero que reciben los jugadores por ronda
 
     def iniciar_ronda(self):
         #Da dinero a los dos jugadores al iniciar ronda

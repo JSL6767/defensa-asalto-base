@@ -56,7 +56,7 @@ class MapaView:
         self.seleccion = None
 
         # Dinero del defensor
-        self.dinero = 200
+        self.dinero = 1000
 
         self.frame = tk.Frame(root, bg="#1a1a2e")
         self.frame.pack(fill="both", expand=True)
