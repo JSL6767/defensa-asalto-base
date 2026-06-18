@@ -58,6 +58,11 @@ class MapaView:
         # Dinero del defensor
         self.dinero = 1000
 
+
+        self.imagenes = {}
+        print("Llamando _cargar_imagenes")
+        self._cargar_imagenes()
+
         self.frame = tk.Frame(root, bg="#1a1a2e")
         self.frame.pack(fill="both", expand=True)
 
@@ -199,7 +204,8 @@ class MapaView:
     
     def _dibujar_mapa(self):
         self.canvas.delete("all")
-        # Obtenemos los colores de la facción del defensor
+
+        # Colores según la facción del defensor
         color_torre, color_muro, color_base = obtener_colores_faccion(self.faccion1)
 
         for fila in range(FILAS):
@@ -208,25 +214,67 @@ class MapaView:
                 y1 = fila * TAMANIO_CASILLA
                 x2 = x1 + TAMANIO_CASILLA
                 y2 = y1 + TAMANIO_CASILLA
+                usar_imagen = False
+                imagen = None
+                texto = ""
 
                 if fila == self.fila_base and col == self.columna_base:
-                    color = color_base
                     texto = "BASE"
+                    if "base" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["base"]
                 elif self.mapa[fila][col] is not None:
                     objeto = self.mapa[fila][col]
                     if isinstance(objeto, Muro):
-                        color = color_muro
                         texto = "MUR"
-                    else:
-                        color = color_torre
-                        texto = objeto.nombre[:3].upper()
-                else:
-                    color = "#2d2d44"
-                    texto = ""
+                        if "muro" in self.imagenes:
+                            usar_imagen = True
+                            imagen = self.imagenes["muro"]
+                    elif isinstance(objeto, TorreBasica):
+                        texto = "TBA"
+                        if "torre_basica" in self.imagenes:
+                            usar_imagen = True
+                            imagen = self.imagenes["torre_basica"]
+                    elif isinstance(objeto, TorrePesada):
+                        texto = "TPE"
+                        if "torre_pesada" in self.imagenes:
+                            usar_imagen = True
+                            imagen = self.imagenes["torre_pesada"]
+                    elif isinstance(objeto, TorreMagica):
+                        texto = "TMA"
+                        if "torre_magica" in self.imagenes:
+                            usar_imagen = True
+                            imagen = self.imagenes["torre_magica"]
 
-                self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#1a1a2e", width=1)
-                if texto:
+                # Fondo siempre del color del mapa, sin cuadritos de colores
+                self.canvas.create_rectangle(x1, y1, x2, y2, fill="#2d2d44", outline="#3d3d5c", width=1)
+
+                # Si hay imagen la dibuja, si no dibuja el texto
+                if usar_imagen:
+                    self.canvas.create_image(x1, y1, anchor="nw", image=imagen)
+                elif texto:
                     self.canvas.create_text(x1+25, y1+25, text=texto, fill="white", font=("Arial", 7, "bold"))
+    def _cargar_imagenes(self):
+        from PIL import Image, ImageTk
+        import os
+
+        if self.faccion1 == "Reino":
+            prefijo = "reino"
+        elif self.faccion1 == "Oscura":
+            prefijo = "oscura"
+        elif self.faccion1 == "Bosque":
+            prefijo = "bosque"
+
+        self.imagenes = {}
+
+        # Cargamos cada imagen de estructura
+        tipos = ["muro", "torre_basica", "torre_pesada", "torre_magica", "base"]
+        for tipo in tipos:
+            ruta = f"assets/imagenes/{prefijo}_{tipo}.png"
+            if os.path.exists(ruta):
+                img = Image.open(ruta).resize((60, 60), Image.LANCZOS)
+                self.imagenes[tipo] = ImageTk.PhotoImage(img)
+        print(f"Imágenes cargadas: {list(self.imagenes.keys())}")   
 
     def _terminar_construccion(self):
         # Termina la fase de construcción y pasa a la fase de ataque

@@ -163,19 +163,6 @@ class AtaqueView:
     def _dibujar_mapa(self):
         self.canvas.delete("all")
 
-        # Colores según facción del defensor
-        color_torre, color_muro, color_base = obtener_colores_faccion(self.faccion1)
-
-        # Color de unidades según facción del atacante
-        if self.faccion2 == "Reino":
-            color_unidad = "#c9a84c"
-        elif self.faccion2 == "Oscura":
-            color_unidad = "#7b2d8b"
-        elif self.faccion2 == "Bosque":
-            color_unidad = "#2d8b3b"
-        else:
-            color_unidad = "#27ae60"
-
         for fila in range(FILAS):
             for col in range(COLUMNAS):
                 x1 = col * TAMANIO_CASILLA
@@ -183,60 +170,69 @@ class AtaqueView:
                 x2 = x1 + TAMANIO_CASILLA
                 y2 = y1 + TAMANIO_CASILLA
                 objeto = self.mapa[fila][col]
-                usar_imagen = False  # si se usó imagen no dibuja texto
+                usar_imagen = False
+                imagen = None
+                texto = ""
 
                 if fila == self.fila_base and col == self.columna_base:
-                    color = color_base
                     texto = "BASE"
+                    if "base" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["base"]
                 elif objeto is None:
                     if col >= COLUMNAS - 3:
-                        color = "#1a3a1a"  # zona de ataque
+                        texto = ""  # zona de ataque
                     else:
-                        color = "#2d2d44"  # zona normal
-                    texto = ""
+                        texto = ""
                 elif isinstance(objeto, Muro):
-                    color = color_muro
                     texto = "MUR"
+                    if "muro" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["muro"]
                 elif isinstance(objeto, TorreBasica):
-                    color = color_torre
                     texto = "TBA"
+                    if "torre_basica" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["torre_basica"]
                 elif isinstance(objeto, TorrePesada):
-                    color = color_torre
                     texto = "TPE"
+                    if "torre_pesada" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["torre_pesada"]
                 elif isinstance(objeto, TorreMagica):
-                    color = color_torre
                     texto = "TMA"
+                    if "torre_magica" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["torre_magica"]
                 elif isinstance(objeto, Soldado):
-                    color = color_unidad
                     texto = "SOL"
                     if "soldado" in self.imagenes:
                         usar_imagen = True
                         imagen = self.imagenes["soldado"]
                 elif isinstance(objeto, Tanque):
-                    color = color_unidad
                     texto = "TAN"
                     if "tanque" in self.imagenes:
                         usar_imagen = True
                         imagen = self.imagenes["tanque"]
                 elif isinstance(objeto, UnidadRapida):
-                    color = color_unidad
                     texto = "RAP"
                     if "rapida" in self.imagenes:
                         usar_imagen = True
                         imagen = self.imagenes["rapida"]
+
+                # Fondo del mapa
+                if fila == self.fila_base and col == self.columna_base:
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="#2d2d44", outline="#3d3d5c", width=1)
+                elif objeto is None and col >= COLUMNAS - 3:
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="#1a3a1a", outline="#3d3d5c", width=1)
                 else:
-                    color = "#2d2d44"
-                    texto = ""
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="#2d2d44", outline="#3d3d5c", width=1)
 
-                # Dibuja el rectángulo de fondo siempre
-                self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#1a1a2e", width=1)
-
-                # Si hay imagen la dibuja, si no dibuja el texto
                 if usar_imagen:
                     self.canvas.create_image(x1, y1, anchor="nw", image=imagen)
                 elif texto:
                     self.canvas.create_text(x1+25, y1+25, text=texto, fill="white", font=("Arial", 7, "bold"))
-
+    
     def _iniciar_combate(self):
         if not self.unidades:
             messagebox.showwarning("Aviso", "Debes colocar al menos una unidad.")
@@ -245,22 +241,37 @@ class AtaqueView:
         self.callback_combate(self.mapa, self.unidades, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base)
 
     def _cargar_imagenes(self):
-        # Cargamos las imágenes según la facción del atacante
-        import tkinter as tk
         from PIL import Image, ImageTk
         import os
 
-        if self.faccion2 == "Reino":
-            prefijo = "reino"
-        elif self.faccion2 == "Oscura":
-            prefijo = "oscura"
-        elif self.faccion2 == "Bosque":
-            prefijo = "bosque"
+        if self.faccion1 == "Reino":
+            prefijo_defensor = "reino"
+        elif self.faccion1 == "Oscura":
+            prefijo_defensor = "oscura"
+        elif self.faccion1 == "Bosque":
+            prefijo_defensor = "bosque"
 
-        # Cargamos cada imagen y la redimensionamos a 45x45
-        tipos = ["soldado", "tanque", "rapida"]
-        for tipo in tipos:
-            ruta = f"assets/imagenes/{prefijo}_{tipo}.png"
+        if self.faccion2 == "Reino":
+            prefijo_atacante = "reino"
+        elif self.faccion2 == "Oscura":
+            prefijo_atacante = "oscura"
+        elif self.faccion2 == "Bosque":
+            prefijo_atacante = "bosque"
+
+        self.imagenes = {}
+
+        # Cargamos imágenes de estructuras del defensor
+        tipos_estructuras = ["muro", "torre_basica", "torre_pesada", "torre_magica", "base"]
+        for tipo in tipos_estructuras:
+            ruta = f"assets/imagenes/{prefijo_defensor}_{tipo}.png"
             if os.path.exists(ruta):
-                img = Image.open(ruta).resize((45, 45), Image.LANCZOS)
+                img = Image.open(ruta).resize((50, 50), Image.NEAREST)
+                self.imagenes[tipo] = ImageTk.PhotoImage(img)
+
+        # Cargamos imágenes de unidades del atacante
+        tipos_unidades = ["soldado", "tanque", "rapida"]
+        for tipo in tipos_unidades:
+            ruta = f"assets/imagenes/{prefijo_atacante}_{tipo}.png"
+            if os.path.exists(ruta):
+                img = Image.open(ruta).resize((50, 50), Image.NEAREST)
                 self.imagenes[tipo] = ImageTk.PhotoImage(img)

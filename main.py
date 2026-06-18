@@ -72,7 +72,7 @@ def main():
     global root
     root = tk.Tk()
     root.title("Defensa y Asalto de Base")
-    root.geometry("800x950")                    # tamaño de la ventana
+    root.geometry("1100x900")                    # tamaño de la ventana
     root.configure(bg="#1a1a2e")                # color de fondo
     root.resizable(False, False)                # no se cambia el tamaño
 
