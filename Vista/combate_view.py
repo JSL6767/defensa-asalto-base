@@ -197,33 +197,55 @@ class CombateView:
 
     def _unidades_avanzan(self):
         for unidad in self.unidades[:]:
-            col_anterior = unidad.columna
+            fila_actual = unidad.fila
+            col_actual = unidad.columna
 
             if not unidad.mover():
                 continue  # estaba congelada
 
-            nueva_col = unidad.columna
+            col_objetivo = unidad.columna
+            unidad.columna = col_actual  # revertimos temporalmente
 
-            # Si llegó a la columna de la base ataca
-            if nueva_col <= COLUMNA_BASE:
+            # Si llegó a la base la ataca
+            if col_objetivo <= COLUMNA_BASE:
                 self.vida_base -= unidad.daño
                 self.label_base.config(text=f"Vida de la base: {self.vida_base}")
-                self._log(f"{unidad.nombre} ataca BASE por {unidad.daño}! Vida: {self.vida_base}")
+                self._log(f"{unidad.nombre} ataca BASE por {unidad.daño}!")
                 unidad.columna = COLUMNA_BASE
-            else:
-                # Verificamos si chocó con algo
-                if self.mapa[unidad.fila][nueva_col] is not None and not isinstance(self.mapa[unidad.fila][nueva_col], type(unidad)):
-                    objeto = self.mapa[unidad.fila][nueva_col]
-                    destruido = objeto.recibir_daño(unidad.daño)
-                    self._log(f"{unidad.nombre} ataca {objeto.nombre} por {unidad.daño}")
-                    if destruido:
-                        self._log(f"{objeto.nombre} destruido!")
-                        self.mapa[unidad.fila][nueva_col] = None
-                    unidad.columna = col_anterior  # no avanza si hay obstáculo
+                continue
+
+            objeto_enfrente = self.mapa[fila_actual][col_objetivo]
+
+            if objeto_enfrente is None:
+                # Camino libre hacia la izquierda, avanza
+                self.mapa[fila_actual][col_actual] = None
+                self.mapa[fila_actual][col_objetivo] = unidad
+                unidad.columna = col_objetivo
+
+                # Después de avanzar, intenta acercarse a la fila de la base
+                if unidad.fila < FILA_BASE and self.mapa[unidad.fila + 1][unidad.columna] is None:
+                    self.mapa[unidad.fila][unidad.columna] = None
+                    unidad.fila += 1
+                    self.mapa[unidad.fila][unidad.columna] = unidad
+                elif unidad.fila > FILA_BASE and self.mapa[unidad.fila - 1][unidad.columna] is None:
+                    self.mapa[unidad.fila][unidad.columna] = None
+                    unidad.fila -= 1
+                    self.mapa[unidad.fila][unidad.columna] = unidad
+
+            elif isinstance(objeto_enfrente, (TorreBasica, TorrePesada, TorreMagica, Muro)):
+                # Hay obstáculo enfrente — lo ataca
+                destruido = objeto_enfrente.recibir_daño(unidad.daño)
+                self._log(f"{unidad.nombre} ataca {objeto_enfrente.nombre} por {unidad.daño}")
+                if destruido:
+                    self._log(f"{objeto_enfrente.nombre} destruido!")
+                    self.mapa[fila_actual][col_objetivo] = None
+                    # Avanza al espacio liberado
+                    self.mapa[fila_actual][col_actual] = None
+                    self.mapa[fila_actual][col_objetivo] = unidad
+                    unidad.columna = col_objetivo
                 else:
-                    # Actualiza posición en el mapa
-                    self.mapa[unidad.fila][col_anterior] = None
-                    self.mapa[unidad.fila][nueva_col] = unidad
+                    # No destruyó, se queda en su lugar
+                    unidad.columna = col_actual
 
     def _verificar_fin(self):
         # El atacante gana si destruye la base
@@ -268,6 +290,7 @@ class CombateView:
                 y2 = y1 + TAMANIO_CASILLA
                 objeto = self.mapa[fila][col]
                 usar_imagen = False
+                imagen = None
 
                 if fila == FILA_BASE and col == COLUMNA_BASE:
                     color = color_base

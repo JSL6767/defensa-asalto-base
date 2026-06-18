@@ -42,7 +42,7 @@ class AtaqueView:
         self.callback_combate = callback_combate
         self.unidades = []              # lista de unidades colocadas
         self.seleccion = None           # unidad seleccionada para colocar
-        self.dinero = 200               # dinero del atacante
+        self.dinero = 1000               # dinero del atacante
         self.imagenes = {}
         self._cargar_imagenes()
         self.fila_base = 5
