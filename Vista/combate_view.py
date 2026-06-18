@@ -45,6 +45,8 @@ class CombateView:
         self.callback_fin_ronda = callback_fin_ronda
         self.turno = 0                      # contador de turnos
         self.combate_activo = False         # si el combate está corriendo
+        self.imagenes = {}
+        self._cargar_imagenes()
 
         self.frame = tk.Frame(root, bg="#1a1a2e")
         self.frame.pack(fill="both", expand=True)
@@ -265,6 +267,7 @@ class CombateView:
                 x2 = x1 + TAMANIO_CASILLA
                 y2 = y1 + TAMANIO_CASILLA
                 objeto = self.mapa[fila][col]
+                usar_imagen = False
 
                 if fila == FILA_BASE and col == COLUMNA_BASE:
                     color = color_base
@@ -287,16 +290,48 @@ class CombateView:
                 elif isinstance(objeto, Soldado):
                     color = color_unidad
                     texto = "SOL"
+                    if "soldado" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["soldado"]
                 elif isinstance(objeto, Tanque):
                     color = color_unidad
                     texto = "TAN"
+                    if "tanque" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["tanque"]
                 elif isinstance(objeto, UnidadRapida):
                     color = color_unidad
                     texto = "RAP"
+                    if "rapida" in self.imagenes:
+                        usar_imagen = True
+                        imagen = self.imagenes["rapida"]
                 else:
                     color = "#2d2d44"
                     texto = ""
 
+                # Dibuja el rectángulo de fondo siempre
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="#1a1a2e", width=1)
-                if texto:
+
+                # Si hay imagen la dibuja, si no dibuja el texto
+                if usar_imagen:
+                    self.canvas.create_image(x1, y1, anchor="nw", image=imagen)
+                elif texto:
                     self.canvas.create_text(x1+25, y1+25, text=texto, fill="white", font=("Arial", 7, "bold"))
+
+    def _cargar_imagenes(self):
+        from PIL import Image, ImageTk
+        import os
+
+        if self.faccion2 == "Reino":
+            prefijo = "reino"
+        elif self.faccion2 == "Oscura":
+            prefijo = "oscura"
+        elif self.faccion2 == "Bosque":
+            prefijo = "bosque"
+
+        tipos = ["soldado", "tanque", "rapida"]
+        for tipo in tipos:
+            ruta = f"assets/imagenes/{prefijo}_{tipo}.png"
+            if os.path.exists(ruta):
+                img = Image.open(ruta).resize((45, 45), Image.LANCZOS)
+                self.imagenes[tipo] = ImageTk.PhotoImage(img)
