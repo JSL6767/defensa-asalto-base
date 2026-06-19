@@ -14,29 +14,31 @@ from Vista.fin_partida_view import FinPartidaView
 victorias_defensor = 0
 victorias_atacante = 0
 
+dinero_extra_defensor_global = 0
+dinero_extra_atacante_global = 0
+
 faccion1_global = None  # facción del defensor guardada
 faccion2_global = None  # facción del atacante guardada
 
-def fin_de_ronda(ganador_ronda, jugador1, jugador2):
-    global victorias_defensor, victorias_atacante
+def fin_de_ronda(ganador_ronda, jugador1, jugador2, dinero_extra_defensor, dinero_extra_atacante):
+    global victorias_defensor, victorias_atacante, dinero_extra_defensor_global, dinero_extra_atacante_global
 
-    # Sumamos la victoria según quien ganó
+    dinero_extra_defensor_global = dinero_extra_defensor
+    dinero_extra_atacante_global = dinero_extra_atacante
+
     if ganador_ronda == "defensor":
         victorias_defensor += 1
     else:
         victorias_atacante += 1
 
-    # Verificamos si alguien ganó la partida completa
     if victorias_defensor == 3 or victorias_atacante == 3:
-        # Alguien ganó la partida
         FinPartidaView(root, ganador_ronda, jugador1, jugador2, victorias_defensor, victorias_atacante, lambda: volver_al_menu(jugador1, jugador2))
     else:
-        # Nadie ha ganado aún, mostramos el marcador y continuamos
         FinRondaView(root, ganador_ronda, jugador1, jugador2, victorias_defensor, victorias_atacante, lambda: nueva_ronda(jugador1, jugador2))
 
 def nueva_ronda(jugador1, jugador2):
-    # Usa las facciones ya elegidas, no vuelve a preguntar
-    MapaView(root, jugador1, jugador2, faccion1_global, faccion2_global, despues_de_construccion)
+    # Pasa el dinero extra ganado en la ronda anterior
+    MapaView(root, jugador1, jugador2, faccion1_global, faccion2_global, despues_de_construccion, dinero_extra_defensor_global)
 
 def volver_al_menu(jugador1, jugador2):
     global victorias_defensor, victorias_atacante
@@ -50,12 +52,11 @@ def despues_del_ataque(mapa, unidades, jugador1, jugador2, faccion1, faccion2, v
     CombateView(root, mapa, unidades, jugador1, jugador2, faccion1, faccion2, vida_base, fin_de_ronda)
 
 def despues_de_construccion(mapa, jugador1, jugador2, faccion1, faccion2, vida_base):
-    # Después de construir abre la fase de ataque
-    AtaqueView(root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, despues_del_ataque)
+    # Pasa el dinero extra del atacante ganado en la ronda anterior
+    AtaqueView(root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, despues_del_ataque, dinero_extra_atacante_global)
 
 def despues_de_facciones(jugador1, jugador2, faccion1, faccion2):
     global faccion1_global, faccion2_global
-    # Guardamos las facciones para usarlas en rondas siguientes
     faccion1_global = faccion1
     faccion2_global = faccion2
     MapaView(root, jugador1, jugador2, faccion1, faccion2, despues_de_construccion)

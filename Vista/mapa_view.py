@@ -36,36 +36,28 @@ def obtener_colores_faccion(faccion):
                 color_base  = "#2d8b3b"
             return color_torre, color_muro, color_base
 class MapaView:
-    def __init__(self, root, jugador1, jugador2, faccion1, faccion2, callback_fin_construccion):
+    def __init__(self, root, jugador1, jugador2, faccion1, faccion2, callback_fin_construccion, dinero_extra=0):
         self.root = root
-        self.jugador1 = jugador1        # defensor
-        self.jugador2 = jugador2        # atacante
-        self.faccion1 = faccion1        # facción del defensor
-        self.faccion2 = faccion2        # facción del atacante
-        self.callback_fin_construccion = callback_fin_construccion  # cuando termina de construir
+        self.jugador1 = jugador1
+        self.jugador2 = jugador2
+        self.faccion1 = faccion1
+        self.faccion2 = faccion2
+        self.callback_fin_construccion = callback_fin_construccion
 
-        # Matriz 12x12 que representa el mapa, None = vacío
         self.mapa = [[None for _ in range(COLUMNAS)] for _ in range(FILAS)]
-
-        # La base central está fija en el centro izquierdo
         self.fila_base = 5
         self.columna_base = 1
         self.vida_base = 500
-
-        # Elemento seleccionado para colocar
         self.seleccion = None
 
-        # Dinero del defensor
-        self.dinero = 1000
-
+        # Dinero inicial + dinero extra ganado en la ronda anterior
+        self.dinero = 1000 + dinero_extra
 
         self.imagenes = {}
-        print("Llamando _cargar_imagenes")
         self._cargar_imagenes()
 
         self.frame = tk.Frame(root, bg="#1a1a2e")
         self.frame.pack(fill="both", expand=True)
-
         self._construir_ui()
 
     def _construir_ui(self):

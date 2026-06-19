@@ -47,6 +47,8 @@ class CombateView:
         self.combate_activo = False         # si el combate está corriendo
         self.imagenes = {}
         self._cargar_imagenes()
+        self.dinero_defensor = 0
+        self.dinero_atacante = 0
 
         self.frame = tk.Frame(root, bg="#1a1a2e")
         self.frame.pack(fill="both", expand=True)
@@ -156,20 +158,17 @@ class CombateView:
         self.root.after(800, self._siguiente_turno)
 
     def _torres_atacan(self):
-        # Recorremos el mapa buscando torres
         for fila in range(FILAS):
             for col in range(COLUMNAS):
                 objeto = self.mapa[fila][col]
                 if not isinstance(objeto, (TorreBasica, TorrePesada, TorreMagica)):
                     continue
 
-                # Buscamos unidad en el alcance
                 objetivo = self._buscar_objetivo(fila, col, objeto.alcance)
                 if objetivo:
                     destruida = objetivo.recibir_daño(objeto.daño)
                     self._log(f"Torre ({fila},{col}) ataca {objetivo.nombre} por {objeto.daño}")
 
-                    # Activamos habilidad especial
                     if isinstance(objeto, TorrePesada):
                         resultado = objeto.habilidad_especial(self.unidades)
                     else:
@@ -181,6 +180,19 @@ class CombateView:
                         self._log(f"{objetivo.nombre} eliminado!")
                         self.mapa[objetivo.fila][objetivo.columna] = None
                         self.unidades.remove(objetivo)
+
+                        # El defensor gana dinero según el tipo de unidad eliminada
+                        if isinstance(objetivo, Soldado):
+                            ganancia = 15
+                        elif isinstance(objetivo, Tanque):
+                            ganancia = 50
+                        elif isinstance(objetivo, UnidadRapida):
+                            ganancia = 25
+                        else:
+                            ganancia = 10
+
+                        self.dinero_defensor += ganancia
+                        self._log(f"Defensor gana ${ganancia} (Total: ${self.dinero_defensor})")
 
     def _buscar_objetivo(self, fila_torre, col_torre, alcance):
         # Busca la unidad más cercana dentro del alcance
@@ -201,10 +213,10 @@ class CombateView:
             col_actual = unidad.columna
 
             if not unidad.mover():
-                continue  # estaba congelada
+                continue
 
             col_objetivo = unidad.columna
-            unidad.columna = col_actual  # revertimos temporalmente
+            unidad.columna = col_actual
 
             # Si llegó a la base la ataca
             if col_objetivo <= COLUMNA_BASE:
@@ -212,56 +224,55 @@ class CombateView:
                 self.label_base.config(text=f"Vida de la base: {self.vida_base}")
                 self._log(f"{unidad.nombre} ataca BASE por {unidad.daño}!")
                 unidad.columna = COLUMNA_BASE
+
+                # El atacante gana dinero por dañar la base
+                self.dinero_atacante += 20
+                self._log(f"Atacante gana $20 por dañar la base (Total: ${self.dinero_atacante})")
                 continue
 
             objeto_enfrente = self.mapa[fila_actual][col_objetivo]
 
             if objeto_enfrente is None:
-                # Camino libre hacia la izquierda, avanza
                 self.mapa[fila_actual][col_actual] = None
                 self.mapa[fila_actual][col_objetivo] = unidad
                 unidad.columna = col_objetivo
 
-                # Después de avanzar, intenta acercarse a la fila de la base
-                if unidad.fila < FILA_BASE and self.mapa[unidad.fila + 1][unidad.columna] is None:
-                    self.mapa[unidad.fila][unidad.columna] = None
-                    unidad.fila += 1
-                    self.mapa[unidad.fila][unidad.columna] = unidad
-                elif unidad.fila > FILA_BASE and self.mapa[unidad.fila - 1][unidad.columna] is None:
-                    self.mapa[unidad.fila][unidad.columna] = None
-                    unidad.fila -= 1
-                    self.mapa[unidad.fila][unidad.columna] = unidad
-
             elif isinstance(objeto_enfrente, (TorreBasica, TorrePesada, TorreMagica, Muro)):
-                # Hay obstáculo enfrente — lo ataca
                 destruido = objeto_enfrente.recibir_daño(unidad.daño)
                 self._log(f"{unidad.nombre} ataca {objeto_enfrente.nombre} por {unidad.daño}")
+
+                # El atacante gana dinero por dañar una torre/muro
+                self.dinero_atacante += 10
+                self._log(f"Atacante gana $10 por dañar (Total: ${self.dinero_atacante})")
+
                 if destruido:
                     self._log(f"{objeto_enfrente.nombre} destruido!")
                     self.mapa[fila_actual][col_objetivo] = None
-                    # Avanza al espacio liberado
+
+                    # Bonus extra por destruir una torre
+                    if not isinstance(objeto_enfrente, Muro):
+                        self.dinero_atacante += 30
+                        self._log(f"Atacante gana $30 extra por destruir torre (Total: ${self.dinero_atacante})")
+
                     self.mapa[fila_actual][col_actual] = None
                     self.mapa[fila_actual][col_objetivo] = unidad
                     unidad.columna = col_objetivo
                 else:
-                    # No destruyó, se queda en su lugar
                     unidad.columna = col_actual
 
     def _verificar_fin(self):
-        # El atacante gana si destruye la base
         if self.vida_base <= 0:
             self.combate_activo = False
             self._log("BASE DESTRUIDA! Gana el atacante!")
             self.frame.destroy()
-            self.callback_fin_ronda("atacante", self.jugador1, self.jugador2)
+            self.callback_fin_ronda("atacante", self.jugador1, self.jugador2, self.dinero_defensor, self.dinero_atacante)
             return True
 
-        # El defensor gana si no quedan unidades
         if not self.unidades:
             self.combate_activo = False
             self._log("Todas las unidades eliminadas! Gana el defensor!")
             self.frame.destroy()
-            self.callback_fin_ronda("defensor", self.jugador1, self.jugador2)
+            self.callback_fin_ronda("defensor", self.jugador1, self.jugador2, self.dinero_defensor, self.dinero_atacante)
             return True
 
         return False

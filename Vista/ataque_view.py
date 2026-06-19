@@ -31,18 +31,21 @@ def obtener_colores_faccion(faccion):
     return color_torre, color_muro, color_base
 
 class AtaqueView:
-    def __init__(self, root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, callback_combate):
+    def __init__(self, root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, callback_combate, dinero_extra=0):
         self.root = root
         self.mapa = mapa
-        self.jugador1 = jugador1        # defensor
-        self.jugador2 = jugador2        # atacante
-        self.faccion1 = faccion1        # facción del defensor
-        self.faccion2 = faccion2        # facción del atacante
+        self.jugador1 = jugador1
+        self.jugador2 = jugador2
+        self.faccion1 = faccion1
+        self.faccion2 = faccion2
         self.vida_base = vida_base
         self.callback_combate = callback_combate
-        self.unidades = []              # lista de unidades colocadas
-        self.seleccion = None           # unidad seleccionada para colocar
-        self.dinero = 1000               # dinero del atacante
+        self.unidades = []
+        self.seleccion = None
+
+        # Dinero inicial + dinero extra ganado en la ronda anterior
+        self.dinero = 1000 + dinero_extra
+
         self.imagenes = {}
         self._cargar_imagenes()
         self.fila_base = 5
