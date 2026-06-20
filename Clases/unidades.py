@@ -33,11 +33,9 @@ class Soldado(Unidad):
         super().__init__("Soldado", costo=30, vida=80, daño=15, velocidad=1)
 
     def habilidad_especial(self, objetivo):
-        # Ataque doble cada 3 turnos
-        self.turnos_habilidad += 1
-        if self.turnos_habilidad >= 3:
+        # Ataque doble (activado manualmente, sin contador interno)
+        if objetivo:
             objetivo.recibir_daño(self.daño * 2)
-            self.turnos_habilidad = 0
             return "¡Ataque doble del soldado!"
         return None
 
@@ -47,13 +45,9 @@ class Tanque(Unidad):
         super().__init__("Tanque", costo=120, vida=400, daño=40, velocidad=1)
 
     def habilidad_especial(self, objetivo=None):
-        # Escudo temporal: reduce el daño recibido a la mitad por 2 turnos
-        self.turnos_habilidad += 1
-        if self.turnos_habilidad >= 5:
-            self.escudo = True
-            self.turnos_habilidad = 0
-            return "¡Escudo del tanque activado!"
-        return None
+        # Escudo temporal (activado manualmente, sin contador interno)
+        self.escudo = True
+        return "¡Escudo del tanque activado!"
 
     def recibir_daño(self, cantidad):
         if hasattr(self, 'escudo') and self.escudo:
@@ -67,12 +61,8 @@ class UnidadRapida(Unidad):
         super().__init__("Unidad Rápida", costo=60, vida=50, daño=10, velocidad=3)
 
     def habilidad_especial(self, objetivo=None):
-        # Aumento de velocidad cada 4 turnos
-        self.turnos_habilidad += 1
-        if self.turnos_habilidad >= 4:
-            self.velocidad = 5
-            self.turnos_habilidad = 0
-            return "¡Velocidad aumentada!"
-        return None
+        # Aumento de velocidad (activado manualmente, sin contador interno)
+        self.velocidad = 5
+        return "¡Velocidad aumentada!"
     
 #mensaje de prueba

@@ -45,6 +45,14 @@ class CombateView:
         self.callback_fin_ronda = callback_fin_ronda
         self.turno = 0
         self.combate_activo = False
+        #cooldowns de habilidades
+        self.cooldown_torre_basica = 0
+        self.cooldown_torre_pesada = 0
+        self.cooldown_torre_magica = 0
+        self.cooldown_soldado = 0
+        self.cooldown_tanque = 0
+        self.cooldown_rapida = 0
+        self.COOLDOWN_MAX = 5  #turnos de espera entre usos
 
         # El dinero ahora empieza con lo que traían de las fases anteriores
         self.dinero_defensor = dinero_defensor
@@ -109,6 +117,9 @@ class CombateView:
         )
         self.canvas.pack(pady=5)
 
+        self.root.bind("<KeyPress>", self._tecla_presionada)
+        self.root.focus_set()
+
         # Botón para iniciar el combate
         self.btn_iniciar = tk.Button(
             self.frame,
@@ -122,6 +133,85 @@ class CombateView:
         self.btn_iniciar.pack(pady=10)
 
         self._dibujar_mapa()
+
+    def _tecla_presionada(self, evento):
+        tecla = evento.char.lower()
+        print(f"Tecla presionada: {tecla}")  # ← debug temporal
+
+        if tecla == "a":
+            self._activar_habilidad_torre(TorreBasica, "cooldown_torre_basica", "Torre Básica")
+        elif tecla == "s":
+            self._activar_habilidad_torre(TorrePesada, "cooldown_torre_pesada", "Torre Pesada")
+        elif tecla == "d":
+            self._activar_habilidad_torre(TorreMagica, "cooldown_torre_magica", "Torre Mágica")
+        elif tecla == "j":
+            self._activar_habilidad_unidad(Soldado, "cooldown_soldado", "Soldado")
+        elif tecla == "k":
+            self._activar_habilidad_unidad(Tanque, "cooldown_tanque", "Tanque")
+        elif tecla == "l":
+            self._activar_habilidad_unidad(UnidadRapida, "cooldown_rapida", "Unidad Rápida")
+
+    def _activar_habilidad_torre(self, clase_torre, atributo_cooldown, nombre):
+        print(f"Intentando activar: {nombre}")  # debug
+        # Verifica si la habilidad está en cooldown
+        if getattr(self, atributo_cooldown) > 0:
+            self._log(f"{nombre} en espera ({getattr(self, atributo_cooldown)} turnos)")
+            return
+
+        activada = False
+        # Buscamos todas las torres de ese tipo en el mapa
+        for fila in range(FILAS):
+            for col in range(COLUMNAS):
+                objeto = self.mapa[fila][col]
+                if isinstance(objeto, clase_torre):
+                    # Buscamos un objetivo en su alcance
+                    objetivo = self._buscar_objetivo(fila, col, objeto.alcance)
+                    if objetivo:
+                        if clase_torre == TorrePesada:
+                            resultado = objeto.habilidad_especial(self.unidades)
+                        else:
+                            resultado = objeto.habilidad_especial(objetivo)
+                        if resultado:
+                            self._log(f"[{nombre}] {resultado}")
+                            activada = True
+
+        if activada:
+            setattr(self, atributo_cooldown, self.COOLDOWN_MAX)
+            self._log(f"{nombre}: habilidad activada! Cooldown {self.COOLDOWN_MAX} turnos")
+        else:
+            self._log(f"{nombre}: no hay objetivos en alcance")
+
+
+    def _activar_habilidad_unidad(self, clase_unidad, atributo_cooldown, nombre):
+        if getattr(self, atributo_cooldown) > 0:
+            self._log(f"{nombre} en espera ({getattr(self, atributo_cooldown)} turnos)")
+            return
+
+        activada = False
+        for unidad in self.unidades:
+            if isinstance(unidad, clase_unidad):
+                # El Soldado necesita un objetivo enfrente para atacar
+                if isinstance(unidad, Soldado):
+                    col_enfrente = unidad.columna - 1
+                    if col_enfrente >= 0:
+                        objetivo = self.mapa[unidad.fila][col_enfrente]
+                    else:
+                        objetivo = None
+                    resultado = unidad.habilidad_especial(objetivo)
+                else:
+                    resultado = unidad.habilidad_especial(None)
+
+                if resultado:
+                    self._log(f"[{nombre}] {resultado}")
+                    self._parpadear_objeto(unidad.fila, unidad.columna)
+                    activada = True
+
+        if activada:
+            setattr(self, atributo_cooldown, self.COOLDOWN_MAX)
+            self._log(f"{nombre}: habilidad activada! Cooldown {self.COOLDOWN_MAX} turnos")
+        else:
+            self._log(f"{nombre}: sin objetivo o no hay unidades de este tipo")
+
 
     def _log(self, mensaje):
         # Agrega un mensaje al log de eventos
@@ -143,6 +233,20 @@ class CombateView:
         self.turno += 1
         self.label_turno.config(text=f"Turno: {self.turno}")
         self._log(f"--- Turno {self.turno} ---")
+
+        #reducimos los cooldowns
+        if self.cooldown_torre_basica > 0:
+            self.cooldown_torre_basica -= 1
+        if self.cooldown_torre_pesada > 0:
+            self.cooldown_torre_pesada -= 1
+        if self.cooldown_torre_magica > 0:
+            self.cooldown_torre_magica -= 1
+        if self.cooldown_soldado > 0:
+            self.cooldown_soldado -= 1
+        if self.cooldown_tanque > 0:
+            self.cooldown_tanque -= 1
+        if self.cooldown_rapida > 0:
+            self.cooldown_rapida -= 1
 
         # Fase 1: Torres atacan unidades
         self._torres_atacan()
@@ -178,14 +282,6 @@ class CombateView:
                     self.dinero_defensor += 5
                     self._log(f"Defensor gana $5 por dañar (Total: ${self.dinero_defensor})")
 
-                    # Activamos habilidad especial
-                    if isinstance(objeto, TorrePesada):
-                        resultado = objeto.habilidad_especial(self.unidades)
-                    else:
-                        resultado = objeto.habilidad_especial(objetivo)
-                    if resultado:
-                        self._log(f"Habilidad: {resultado}")
-
                     if destruida:
                         self._log(f"{objetivo.nombre} eliminado!")
                         self.mapa[objetivo.fila][objetivo.columna] = None
@@ -203,6 +299,19 @@ class CombateView:
 
                         self.dinero_defensor += ganancia
                         self._log(f"Defensor gana ${ganancia} por eliminar (Total: ${self.dinero_defensor})")
+
+    def _parpadear_objeto(self, fila, col):
+        x1 = col * TAMANIO_CASILLA
+        y1 = fila * TAMANIO_CASILLA
+        x2 = x1 + TAMANIO_CASILLA
+        y2 = y1 + TAMANIO_CASILLA
+
+        # Dibuja un destello amarillo brillante encima de todo
+        destello = self.canvas.create_oval(x1+5, y1+5, x2-5, y2-5, fill="#ffff00", outline="#ffaa00", width=3)
+        self.canvas.tag_raise(destello)  # asegura que esté encima de la imagen
+        self.root.after(600, lambda: self.canvas.delete(destello))
+
+    
 
     def _buscar_objetivo(self, fila_torre, col_torre, alcance):
         # Busca la unidad más cercana dentro del alcance
