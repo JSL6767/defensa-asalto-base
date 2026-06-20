@@ -33,22 +33,25 @@ def obtener_colores_faccion(faccion):
     return color_torre, color_muro, color_base
 
 class CombateView:
-    def __init__(self, root, mapa, unidades, jugador1, jugador2, faccion1, faccion2, vida_base, callback_fin_ronda):
+    def __init__(self, root, mapa, unidades, jugador1, jugador2, faccion1, faccion2, vida_base, callback_fin_ronda, dinero_defensor=500, dinero_atacante=500):
         self.root = root
         self.mapa = mapa
-        self.unidades = unidades            # lista de unidades del atacante
-        self.jugador1 = jugador1            # defensor
-        self.jugador2 = jugador2            # atacante
-        self.faccion1 = faccion1            # facción del defensor
-        self.faccion2 = faccion2            # facción del atacante
-        self.vida_base = vida_base          # vida de la base central
+        self.unidades = unidades
+        self.jugador1 = jugador1
+        self.jugador2 = jugador2
+        self.faccion1 = faccion1
+        self.faccion2 = faccion2
+        self.vida_base = vida_base
         self.callback_fin_ronda = callback_fin_ronda
-        self.turno = 0                      # contador de turnos
-        self.combate_activo = False         # si el combate está corriendo
+        self.turno = 0
+        self.combate_activo = False
+
+        # El dinero ahora empieza con lo que traían de las fases anteriores
+        self.dinero_defensor = dinero_defensor
+        self.dinero_atacante = dinero_atacante
+
         self.imagenes = {}
         self._cargar_imagenes()
-        self.dinero_defensor = 0
-        self.dinero_atacante = 0
 
         self.frame = tk.Frame(root, bg="#1a1a2e")
         self.frame.pack(fill="both", expand=True)
@@ -158,17 +161,24 @@ class CombateView:
         self.root.after(800, self._siguiente_turno)
 
     def _torres_atacan(self):
+        # Recorremos el mapa buscando torres
         for fila in range(FILAS):
             for col in range(COLUMNAS):
                 objeto = self.mapa[fila][col]
                 if not isinstance(objeto, (TorreBasica, TorrePesada, TorreMagica)):
                     continue
 
+                # Buscamos unidad en el alcance
                 objetivo = self._buscar_objetivo(fila, col, objeto.alcance)
                 if objetivo:
                     destruida = objetivo.recibir_daño(objeto.daño)
                     self._log(f"Torre ({fila},{col}) ataca {objetivo.nombre} por {objeto.daño}")
 
+                    # El defensor gana dinero por dañar (poco)
+                    self.dinero_defensor += 5
+                    self._log(f"Defensor gana $5 por dañar (Total: ${self.dinero_defensor})")
+
+                    # Activamos habilidad especial
                     if isinstance(objeto, TorrePesada):
                         resultado = objeto.habilidad_especial(self.unidades)
                     else:
@@ -181,18 +191,18 @@ class CombateView:
                         self.mapa[objetivo.fila][objetivo.columna] = None
                         self.unidades.remove(objetivo)
 
-                        # El defensor gana dinero según el tipo de unidad eliminada
+                        # El defensor gana MUCHO MÁS dinero por eliminar
                         if isinstance(objetivo, Soldado):
-                            ganancia = 15
+                            ganancia = 40
                         elif isinstance(objetivo, Tanque):
-                            ganancia = 50
+                            ganancia = 100
                         elif isinstance(objetivo, UnidadRapida):
-                            ganancia = 25
+                            ganancia = 60
                         else:
-                            ganancia = 10
+                            ganancia = 30
 
                         self.dinero_defensor += ganancia
-                        self._log(f"Defensor gana ${ganancia} (Total: ${self.dinero_defensor})")
+                        self._log(f"Defensor gana ${ganancia} por eliminar (Total: ${self.dinero_defensor})")
 
     def _buscar_objetivo(self, fila_torre, col_torre, alcance):
         # Busca la unidad más cercana dentro del alcance

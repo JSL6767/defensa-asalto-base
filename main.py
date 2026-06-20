@@ -20,11 +20,11 @@ dinero_extra_atacante_global = 0
 faccion1_global = None  # facción del defensor guardada
 faccion2_global = None  # facción del atacante guardada
 
-def fin_de_ronda(ganador_ronda, jugador1, jugador2, dinero_extra_defensor, dinero_extra_atacante):
+def fin_de_ronda(ganador_ronda, jugador1, jugador2, dinero_defensor_final, dinero_atacante_final):
     global victorias_defensor, victorias_atacante, dinero_extra_defensor_global, dinero_extra_atacante_global
 
-    dinero_extra_defensor_global = dinero_extra_defensor
-    dinero_extra_atacante_global = dinero_extra_atacante
+    dinero_extra_defensor_global = dinero_defensor_final
+    dinero_extra_atacante_global = dinero_atacante_final
 
     if ganador_ronda == "defensor":
         victorias_defensor += 1
@@ -47,13 +47,11 @@ def volver_al_menu(jugador1, jugador2):
     victorias_atacante = 0
     MenuView(root, jugador1, jugador2, ir_a_facciones)
 
-def despues_del_ataque(mapa, unidades, jugador1, jugador2, faccion1, faccion2, vida_base):
-    # Después del ataque inicia el combate
-    CombateView(root, mapa, unidades, jugador1, jugador2, faccion1, faccion2, vida_base, fin_de_ronda)
+def despues_del_ataque(mapa, unidades, jugador1, jugador2, faccion1, faccion2, vida_base, dinero_defensor, dinero_atacante):
+    CombateView(root, mapa, unidades, jugador1, jugador2, faccion1, faccion2, vida_base, fin_de_ronda, dinero_defensor, dinero_atacante)
 
-def despues_de_construccion(mapa, jugador1, jugador2, faccion1, faccion2, vida_base):
-    # Pasa el dinero extra del atacante ganado en la ronda anterior
-    AtaqueView(root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, despues_del_ataque, dinero_extra_atacante_global)
+def despues_de_construccion(mapa, jugador1, jugador2, faccion1, faccion2, vida_base, dinero_defensor_restante):
+    AtaqueView(root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, despues_del_ataque, dinero_extra_atacante_global, dinero_defensor_restante)
 
 def despues_de_facciones(jugador1, jugador2, faccion1, faccion2):
     global faccion1_global, faccion2_global

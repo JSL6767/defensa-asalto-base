@@ -31,7 +31,7 @@ def obtener_colores_faccion(faccion):
     return color_torre, color_muro, color_base
 
 class AtaqueView:
-    def __init__(self, root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, callback_combate, dinero_extra=0):
+    def __init__(self, root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, callback_combate, dinero_extra=0, dinero_defensor=500):
         self.root = root
         self.mapa = mapa
         self.jugador1 = jugador1
@@ -42,9 +42,8 @@ class AtaqueView:
         self.callback_combate = callback_combate
         self.unidades = []
         self.seleccion = None
-
-        # Dinero inicial + dinero extra ganado en la ronda anterior
-        self.dinero = 1000 + dinero_extra
+        self.dinero = dinero_extra if dinero_extra > 0 else 300
+        self.dinero_defensor = dinero_defensor  # guardamos el dinero del defensor para pasarlo al combate
 
         self.imagenes = {}
         self._cargar_imagenes()
@@ -101,6 +100,7 @@ class AtaqueView:
         )
         self.canvas.pack(pady=10)
         self.canvas.bind("<Button-1>", self._click_mapa)
+        self.canvas.bind("<Button-3>", self._click_derecho)
 
         # Botón para iniciar combate
         tk.Button(
@@ -241,7 +241,7 @@ class AtaqueView:
             messagebox.showwarning("Aviso", "Debes colocar al menos una unidad.")
             return
         self.frame.destroy()
-        self.callback_combate(self.mapa, self.unidades, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base)
+        self.callback_combate(self.mapa, self.unidades, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base, self.dinero_defensor, self.dinero)
 
     def _cargar_imagenes(self):
         from PIL import Image, ImageTk
@@ -278,3 +278,28 @@ class AtaqueView:
             if os.path.exists(ruta):
                 img = Image.open(ruta).resize((50, 50), Image.NEAREST)
                 self.imagenes[tipo] = ImageTk.PhotoImage(img)
+    def _click_derecho(self, evento):
+        # Elimina la unidad de la casilla y devuelve el dinero
+        col = evento.x // TAMANIO_CASILLA
+        fila = evento.y // TAMANIO_CASILLA
+
+        objeto = self.mapa[fila][col]
+        if objeto is None:
+            return  # no hay nada que eliminar
+
+        # Determinamos el costo según el tipo para devolverlo
+        if isinstance(objeto, Soldado):
+            costo = 30
+        elif isinstance(objeto, Tanque):
+            costo = 120
+        elif isinstance(objeto, UnidadRapida):
+            costo = 60
+        else:
+            return  # no es una unidad, no hacemos nada
+
+    # Eliminamos del mapa y de la lista de unidades
+        self.mapa[fila][col] = None
+        self.unidades.remove(objeto)
+        self.dinero += costo
+        self.label_dinero.config(text=f"Dinero: {self.dinero}")
+        self._dibujar_mapa()

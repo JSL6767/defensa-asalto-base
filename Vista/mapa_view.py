@@ -51,7 +51,7 @@ class MapaView:
         self.seleccion = None
 
         # Dinero inicial + dinero extra ganado en la ronda anterior
-        self.dinero = 1000 + dinero_extra
+        self.dinero = dinero_extra if dinero_extra > 0 else 500
 
         self.imagenes = {}
         self._cargar_imagenes()
@@ -95,6 +95,7 @@ class MapaView:
 
         # Click en el canvas para colocar elementos
         self.canvas.bind("<Button-1>", self._click_mapa)
+        self.canvas.bind("<Button-3>", self._click_derecho)
 
         # Botón para terminar construcción
         tk.Button(
@@ -269,7 +270,35 @@ class MapaView:
         print(f"Imágenes cargadas: {list(self.imagenes.keys())}")   
 
     def _terminar_construccion(self):
-        # Termina la fase de construcción y pasa a la fase de ataque
         self.frame.destroy()
-        self.callback_fin_construccion(self.mapa, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base)
-    
+        self.callback_fin_construccion(self.mapa, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base, self.dinero)
+    def _click_derecho(self, evento):
+        # Elimina el elemento de la casilla y devuelve el dinero
+        col = evento.x // TAMANIO_CASILLA
+        fila = evento.y // TAMANIO_CASILLA
+
+        # No se puede eliminar la base
+        if fila == self.fila_base and col == self.columna_base:
+            return
+
+        objeto = self.mapa[fila][col]
+        if objeto is None:
+            return  # no hay nada que eliminar
+
+        # Determinamos el costo según el tipo para devolverlo
+        if isinstance(objeto, Muro):
+            costo = 20
+        elif isinstance(objeto, TorreBasica):
+            costo = 50
+        elif isinstance(objeto, TorrePesada):
+            costo = 150
+        elif isinstance(objeto, TorreMagica):
+            costo = 100
+        else:
+            costo = 0
+
+        # Eliminamos del mapa y devolvemos el dinero
+        self.mapa[fila][col] = None
+        self.dinero += costo
+        self.label_dinero.config(text=f"💰 Dinero: {self.dinero}")
+        self._dibujar_mapa()
