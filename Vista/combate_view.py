@@ -279,8 +279,7 @@ class CombateView:
                     self._log(f"Torre ({fila},{col}) ataca {objetivo.nombre} por {objeto.daño}")
 
                     # El defensor gana dinero por dañar (poco)
-                    self.dinero_defensor += 5
-                    self._log(f"Defensor gana $5 por dañar (Total: ${self.dinero_defensor})")
+                    
 
                     if destruida:
                         self._log(f"{objetivo.nombre} eliminado!")
@@ -361,8 +360,7 @@ class CombateView:
                 self._log(f"{unidad.nombre} ataca {objeto_enfrente.nombre} por {unidad.daño}")
 
                 # El atacante gana dinero por dañar una torre/muro
-                self.dinero_atacante += 10
-                self._log(f"Atacante gana $10 por dañar (Total: ${self.dinero_atacante})")
+                
 
                 if destruido:
                     self._log(f"{objeto_enfrente.nombre} destruido!")
