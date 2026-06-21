@@ -5,36 +5,17 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Clases.torres import TorreBasica, TorrePesada, TorreMagica
 from Clases.muro import Muro
 
-# Tamaño de cada casilla en píxeles
-TAMANIO_CASILLA = 45
+TAMANIO_CASILLA = 50
 FILAS = 12
 COLUMNAS = 12
 
-# Colores según el contenido de la casilla
-COLORES = {
-    "vacio":   "#2d2d44",  # casilla vacía
-    "base":    "#e74c3c",  # base central del defensor
-    "muro":    "#7f8c8d",  # muro
-    "torre_basica":  "#3498db",  # torre básica
-    "torre_pesada":  "#e67e22",  # torre pesada
-    "torre_magica":  "#9b59b6",  # torre mágica
-    "unidad":  "#e74c3c",  # unidades atacantes
-}
-def obtener_colores_faccion(faccion):
-        # Retorna color de torre, muro y base según la facción
-            if faccion == "Reino":
-                color_torre = "#c9a84c"
-                color_muro  = "#a07830"
-                color_base  = "#c9a84c"
-            elif faccion == "Oscura":
-                color_torre = "#7b2d8b"
-                color_muro  = "#4a1a5a"
-                color_base  = "#7b2d8b"
-            elif faccion == "Bosque":
-                color_torre = "#2d8b3b"
-                color_muro  = "#1a5a25"
-                color_base  = "#2d8b3b"
-            return color_torre, color_muro, color_base
+COLOR_FONDO = "#1a0f1f"
+COLOR_PANEL = "#3d1530"
+COLOR_CASILLA = "#3d1530"
+COLOR_BORDE = "#5e1f3d"
+COLOR_ACENTO = "#9b4f7f"
+COLOR_TEXTO = "#e8d5e0"
+
 class MapaView:
     def __init__(self, root, jugador1, jugador2, faccion1, faccion2, callback_fin_construccion, dinero_extra=0):
         self.root = root
@@ -49,131 +30,109 @@ class MapaView:
         self.columna_base = 1
         self.vida_base = 500
         self.seleccion = None
-
-        # Dinero inicial + dinero extra ganado en la ronda anterior
-        self.dinero = dinero_extra if dinero_extra > 0 else 500
-
+        self.dinero = 200 + dinero_extra
+        self.torre_resaltada = None  # guarda (fila, col, alcance) de la última torre colocada
         self.imagenes = {}
         self._cargar_imagenes()
 
-        self.frame = tk.Frame(root, bg="#1a1a2e")
+        self.frame = tk.Frame(root, bg=COLOR_FONDO)
         self.frame.pack(fill="both", expand=True)
         self._construir_ui()
 
+        
+
     def _construir_ui(self):
-        # Título
         tk.Label(
             self.frame,
-            text=f"⚔ Fase de Construcción — {self.jugador1['nombre']} (Defensor)",
-            font=("Arial", 14, "bold"),
-            bg="#1a1a2e",
-            fg="#c9a84c"
+            text=f"Fase de Construccion - {self.jugador1['nombre']} (Defensor)",
+            font=("Georgia", 14, "bold"),
+            bg=COLOR_FONDO,
+            fg=COLOR_ACENTO
         ).pack(pady=10)
 
-        # Dinero disponible
         self.label_dinero = tk.Label(
             self.frame,
-            text=f"💰 Dinero: {self.dinero}",
-            font=("Arial", 12),
-            bg="#1a1a2e",
-            fg="white"
+            text=f"Dinero: {self.dinero}",
+            font=("Georgia", 12),
+            bg=COLOR_FONDO,
+            fg=COLOR_TEXTO
         )
         self.label_dinero.pack()
 
-        # Panel de tienda (botones para comprar)
         self._construir_tienda()
 
-        # Canvas donde se dibuja el mapa
         self.canvas = tk.Canvas(
             self.frame,
             width=COLUMNAS * TAMANIO_CASILLA,
             height=FILAS * TAMANIO_CASILLA,
-            bg="#2d2d44",
+            bg=COLOR_FONDO,
             highlightthickness=0
         )
         self.canvas.pack(pady=10)
-
-        # Click en el canvas para colocar elementos
         self.canvas.bind("<Button-1>", self._click_mapa)
         self.canvas.bind("<Button-3>", self._click_derecho)
 
-        # Botón para terminar construcción
         tk.Button(
             self.frame,
-            text="Terminar Construcción",
-            font=("Arial", 12, "bold"),
-            bg="#c9a84c",
-            fg="#1a1a2e",
+            text="Terminar Construccion",
+            font=("Georgia", 12, "bold"),
+            bg=COLOR_ACENTO,
+            fg=COLOR_FONDO,
             command=self._terminar_construccion,
             padx=15, pady=8
         ).pack(pady=10)
 
-        # Dibujamos el mapa inicial
         self._dibujar_mapa()
 
     def _construir_tienda(self):
-        # Panel de tienda con los elementos disponibles
-        tienda = tk.Frame(self.frame, bg="#16213e", padx=10, pady=8)
+        tienda = tk.Frame(self.frame, bg=COLOR_PANEL, padx=10, pady=8)
         tienda.pack(fill="x", padx=20)
 
-        tk.Label(tienda, text="Tienda:", bg="#16213e", fg="white", font=("Arial", 11, "bold")).pack(side="left", padx=5)
+        tk.Label(tienda, text="Tienda:", bg=COLOR_PANEL, fg=COLOR_TEXTO, font=("Georgia", 11, "bold")).pack(side="left", padx=5)
 
-        # Botones de compra
-        elementos = [
-            ("Muro $20",         "muro",         "#7f8c8d"),
-            ("Torre Básica $50", "torre_basica",  "#3498db"),
-            ("Torre Pesada $150","torre_pesada",  "#e67e22"),
-            ("Torre Mágica $100","torre_magica",  "#9b59b6"),
-        ]
+        tk.Button(tienda, text="Muro $20", bg="#7f8c8d", fg="white", font=("Georgia", 10),
+            command=lambda: self._seleccionar("muro")).pack(side="left", padx=5)
+        tk.Button(tienda, text="Torre Basica $50", bg="#3498db", fg="white", font=("Georgia", 10),
+            command=lambda: self._seleccionar("torre_basica")).pack(side="left", padx=5)
+        tk.Button(tienda, text="Torre Pesada $150", bg="#e67e22", fg="white", font=("Georgia", 10),
+            command=lambda: self._seleccionar("torre_pesada")).pack(side="left", padx=5)
+        tk.Button(tienda, text="Torre Magica $100", bg="#9b59b6", fg="white", font=("Georgia", 10),
+            command=lambda: self._seleccionar("torre_magica")).pack(side="left", padx=5)
 
-        for nombre, tipo, color in elementos:
-            tk.Button(
-                tienda,
-                text=nombre,
-                bg=color,
-                fg="white",
-                font=("Arial", 10),
-                command=lambda t=tipo: self._seleccionar(t)
-            ).pack(side="left", padx=5)
-
-        # Label que muestra qué está seleccionado
-        self.label_seleccion = tk.Label(tienda, text="Selección: ninguna", bg="#16213e", fg="#c9a84c", font=("Arial", 10))
+        self.label_seleccion = tk.Label(tienda, text="Seleccion: ninguna", bg=COLOR_PANEL, fg=COLOR_ACENTO, font=("Georgia", 10))
         self.label_seleccion.pack(side="left", padx=10)
 
     def _seleccionar(self, tipo):
-        # Guarda qué elemento quiere colocar el defensor
         self.seleccion = tipo
-        self.label_seleccion.config(text=f"Selección: {tipo}")
+        self.label_seleccion.config(text=f"Seleccion: {tipo}")
 
     def _click_mapa(self, evento):
-        # Calcula en qué casilla hizo click
         col = evento.x // TAMANIO_CASILLA
         fila = evento.y // TAMANIO_CASILLA
 
-        # No se puede colocar nada si no hay selección
         if not self.seleccion:
-            messagebox.showwarning("Aviso", "Selecciona un elemento de la tienda primero.")
+            messagebox.showwarning("Aviso", "Selecciona un elemento primero.")
             return
-
-        # No se puede colocar sobre la base
         if fila == self.fila_base and col == self.columna_base:
             messagebox.showwarning("Aviso", "No puedes colocar nada sobre la base.")
             return
-
-        # No se puede colocar sobre algo que ya existe
         if self.mapa[fila][col] is not None:
             messagebox.showwarning("Aviso", "Ya hay algo en esa casilla.")
             return
 
-        # Verificamos el costo y descontamos el dinero
-        costos = {"muro": 20, "torre_basica": 50, "torre_pesada": 150, "torre_magica": 100}
-        costo = costos[self.seleccion]
+        if self.seleccion == "muro":
+            costo = 20
+        elif self.seleccion == "torre_basica":
+            costo = 50
+        elif self.seleccion == "torre_pesada":
+            costo = 150
+        elif self.seleccion == "torre_magica":
+            costo = 100
 
         if self.dinero < costo:
             messagebox.showerror("Sin dinero", "No tienes suficiente dinero.")
             return
 
-        # Creamos el objeto según la selección
         if self.seleccion == "muro":
             objeto = Muro()
         elif self.seleccion == "torre_basica":
@@ -183,23 +142,63 @@ class MapaView:
         elif self.seleccion == "torre_magica":
             objeto = TorreMagica()
 
-        # Guardamos posición y lo ponemos en el mapa
         objeto.fila = fila
         objeto.columna = col
         self.mapa[fila][col] = objeto
-
-        # Descontamos el dinero y actualizamos el label
         self.dinero -= costo
-        self.label_dinero.config(text=f"💰 Dinero: {self.dinero}")
+        self.label_dinero.config(text=f"Dinero: {self.dinero}")
 
-        # Redibujamos el mapa
+        # Si es una torre, guardamos su posicion y alcance para resaltarlo en verde
+        if self.seleccion in ["torre_basica", "torre_pesada", "torre_magica"]:
+            self.torre_resaltada = (fila, col, objeto.alcance)
+        else:
+            self.torre_resaltada = None
+
         self._dibujar_mapa()
-    
+
+    def _click_derecho(self, evento):
+        col = evento.x // TAMANIO_CASILLA
+        fila = evento.y // TAMANIO_CASILLA
+
+        if fila == self.fila_base and col == self.columna_base:
+            return
+
+        objeto = self.mapa[fila][col]
+        if objeto is None:
+            return
+
+        if isinstance(objeto, Muro):
+            costo = 20
+        elif isinstance(objeto, TorreBasica):
+            costo = 50
+        elif isinstance(objeto, TorrePesada):
+            costo = 150
+        elif isinstance(objeto, TorreMagica):
+            costo = 100
+        else:
+            costo = 0
+
+        # Si borramos la torre que tenia el alcance resaltado, quitamos el resaltado
+        if self.torre_resaltada and self.torre_resaltada[0] == fila and self.torre_resaltada[1] == col:
+            self.torre_resaltada = None
+
+        self.mapa[fila][col] = None
+        self.dinero += costo
+        self.label_dinero.config(text=f"Dinero: {self.dinero}")
+        self._dibujar_mapa()
+
     def _dibujar_mapa(self):
         self.canvas.delete("all")
 
-        # Colores según la facción del defensor
-        color_torre, color_muro, color_base = obtener_colores_faccion(self.faccion1)
+        # Primero dibujamos el resaltado de alcance si hay una torre activa
+        casillas_resaltadas = set()
+        if self.torre_resaltada:
+            fila_t, col_t, alcance = self.torre_resaltada
+            for fila in range(FILAS):
+                for col in range(COLUMNAS):
+                    distancia = abs(fila - fila_t) + abs(col - col_t)
+                    if distancia <= alcance:
+                        casillas_resaltadas.add((fila, col))
 
         for fila in range(FILAS):
             for col in range(COLUMNAS):
@@ -210,7 +209,7 @@ class MapaView:
                 usar_imagen = False
                 imagen = None
                 texto = ""
-
+    
                 if fila == self.fila_base and col == self.columna_base:
                     texto = "BASE"
                     if "base" in self.imagenes:
@@ -239,17 +238,25 @@ class MapaView:
                             usar_imagen = True
                             imagen = self.imagenes["torre_magica"]
 
-                # Fondo siempre del color del mapa, sin cuadritos de colores
-                self.canvas.create_rectangle(x1, y1, x2, y2, fill="#2d2d44", outline="#3d3d5c", width=1)
+                # Color de fondo: verde si está en el alcance resaltado
+                if (fila, col) in casillas_resaltadas:
+                    color_fondo = "#2d6b3d"
+                else:
+                    color_fondo = COLOR_CASILLA
 
-                # Si hay imagen la dibuja, si no dibuja el texto
+                self.canvas.create_rectangle(x1, y1, x2, y2, fill=color_fondo, outline=COLOR_BORDE, width=1)
+
                 if usar_imagen:
                     self.canvas.create_image(x1, y1, anchor="nw", image=imagen)
                 elif texto:
-                    self.canvas.create_text(x1+25, y1+25, text=texto, fill="white", font=("Arial", 7, "bold"))
+                    self.canvas.create_text(x1+25, y1+25, text=texto, fill=COLOR_TEXTO, font=("Georgia", 7, "bold"))
+
+    def _terminar_construccion(self):
+        self.frame.destroy()
+        self.callback_fin_construccion(self.mapa, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base, self.dinero)
+
     def _cargar_imagenes(self):
         from PIL import Image, ImageTk
-        import os
 
         if self.faccion1 == "Reino":
             prefijo = "reino"
@@ -259,46 +266,9 @@ class MapaView:
             prefijo = "bosque"
 
         self.imagenes = {}
-
-        # Cargamos cada imagen de estructura
         tipos = ["muro", "torre_basica", "torre_pesada", "torre_magica", "base"]
         for tipo in tipos:
             ruta = f"assets/imagenes/{prefijo}_{tipo}.png"
             if os.path.exists(ruta):
-                img = Image.open(ruta).resize((60, 60), Image.LANCZOS)
+                img = Image.open(ruta).resize((50, 50), Image.NEAREST)
                 self.imagenes[tipo] = ImageTk.PhotoImage(img)
-        print(f"Imágenes cargadas: {list(self.imagenes.keys())}")   
-
-    def _terminar_construccion(self):
-        self.frame.destroy()
-        self.callback_fin_construccion(self.mapa, self.jugador1, self.jugador2, self.faccion1, self.faccion2, self.vida_base, self.dinero)
-    def _click_derecho(self, evento):
-        # Elimina el elemento de la casilla y devuelve el dinero
-        col = evento.x // TAMANIO_CASILLA
-        fila = evento.y // TAMANIO_CASILLA
-
-        # No se puede eliminar la base
-        if fila == self.fila_base and col == self.columna_base:
-            return
-
-        objeto = self.mapa[fila][col]
-        if objeto is None:
-            return  # no hay nada que eliminar
-
-        # Determinamos el costo según el tipo para devolverlo
-        if isinstance(objeto, Muro):
-            costo = 20
-        elif isinstance(objeto, TorreBasica):
-            costo = 50
-        elif isinstance(objeto, TorrePesada):
-            costo = 150
-        elif isinstance(objeto, TorreMagica):
-            costo = 100
-        else:
-            costo = 0
-
-        # Eliminamos del mapa y devolvemos el dinero
-        self.mapa[fila][col] = None
-        self.dinero += costo
-        self.label_dinero.config(text=f"💰 Dinero: {self.dinero}")
-        self._dibujar_mapa()

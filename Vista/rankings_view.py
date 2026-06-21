@@ -1,103 +1,93 @@
 import tkinter as tk
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-#Se importa la función que retorna los top 5
 from sistema_archivos import obtener_top_jugadores
+
+COLOR_FONDO = "#1a0f1f"
+COLOR_PANEL = "#3d1530"
+COLOR_PANEL2 = "#5e1f3d"
+COLOR_BOTON = "#7b1e3a"
+COLOR_ACENTO = "#9b4f7f"
+COLOR_TEXTO = "#e8d5e0"
 
 class RankingsView:
     def __init__(self, root, callback_volver):
         self.root = root
-        self.callback_volver = callback_volver  # función para volver al menú anterior
+        self.callback_volver = callback_volver
 
-        #Frame principal con fondo oscuro
-        self.frame = tk.Frame(root, bg="#1a1a2e")
+        self.frame = tk.Frame(root, bg=COLOR_FONDO)
         self.frame.pack(fill="both", expand=True)
 
         self._construir_ui()
 
     def _construir_ui(self):
-        #Título de la ventana
         tk.Label(
             self.frame,
-            text="🏆 Top Jugadores 🏆",
-            font=("Arial", 22, "bold"),
-            bg="#1a1a2e",
-            fg="#c9a84c"
+            text="Top Jugadores",
+            font=("Georgia", 22, "bold"),
+            bg=COLOR_FONDO,
+            fg=COLOR_ACENTO
         ).pack(pady=20)
 
-        #Se obtienen los top 5 desde el archivo JSON
         top_defensores, top_atacantes = obtener_top_jugadores()
 
-        #Se crea un panel para defensores y otro para atacantes
-        self._panel_ranking("Top Defensores 🛡", top_defensores, "victorias_defensor", "#16213e")
-        self._panel_ranking("Top Atacantes ⚔", top_atacantes, "victorias_atacante", "#0f3460")
+        self._panel_ranking("Top Defensores", top_defensores, "victorias_defensor", COLOR_PANEL)
+        self._panel_ranking("Top Atacantes", top_atacantes, "victorias_atacante", COLOR_PANEL2)
 
-        #Botón para volver al menú anterior
         tk.Button(
             self.frame,
             text="Volver",
-            font=("Arial", 12, "bold"),
-            bg="#e94560",
-            fg="white",
+            font=("Georgia", 12, "bold"),
+            bg=COLOR_BOTON,
+            fg=COLOR_TEXTO,
             command=self._volver,
             padx=20, pady=8
         ).pack(pady=20)
 
     def _panel_ranking(self, titulo, jugadores, campo_victorias, color):
-        #Panel con el color recibido
         panel = tk.Frame(self.frame, bg=color, padx=20, pady=15)
         panel.pack(pady=10, padx=40, fill="x")
 
-        #Título del panel
         tk.Label(
             panel,
             text=titulo,
-            font=("Arial", 14, "bold"),
+            font=("Georgia", 14, "bold"),
             bg=color,
-            fg="#c9a84c"
+            fg=COLOR_ACENTO
         ).pack(pady=5)
 
-        #Si no hay jugadores no se muestra el mensaje
         if not jugadores:
             tk.Label(
                 panel,
-                text="Aún no hay jugadores registrados",
+                text="Aun no hay jugadores registrados",
                 bg=color,
-                fg="white",
-                font=("Arial", 11)
+                fg=COLOR_TEXTO,
+                font=("Georgia", 11)
             ).pack()
             return
 
-        #Se recorre la lista y se muestra su jugador con su posición
         for i, jugador in enumerate(jugadores):
             linea = tk.Frame(panel, bg=color)
             linea.pack(fill="x", pady=2)
 
-            #Medallas según posición
-            medalla = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][i]
-
-            #Nombre del jugador a la izquierda
             tk.Label(
                 linea,
-                text=f"{medalla}  {jugador['nombre']}",
-                font=("Arial", 12),
+                text=f"{i+1}.  {jugador['nombre']}",
+                font=("Georgia", 12),
                 bg=color,
-                fg="white",
+                fg=COLOR_TEXTO,
                 anchor="w"
             ).pack(side="left", padx=5)
 
-            #Victorias a la derecha
             tk.Label(
                 linea,
                 text=f"{jugador[campo_victorias]} victorias",
-                font=("Arial", 12, "bold"),
+                font=("Georgia", 12, "bold"),
                 bg=color,
-                fg="#c9a84c",
+                fg=COLOR_ACENTO,
                 anchor="e"
             ).pack(side="right", padx=5)
 
     def _volver(self):
-        #Destruye este frame y llama al callback para volver al menú
         self.frame.destroy()
         self.callback_volver()
-

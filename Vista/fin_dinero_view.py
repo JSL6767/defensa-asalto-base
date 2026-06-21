@@ -10,20 +10,15 @@ COLOR_TEXTO = "#e8d5e0"
 COLOR_DEFENSOR = "#9b4f7f"
 COLOR_ATACANTE = "#c9596f"
 
-class FinPartidaView:
-    def __init__(self, root, ganador_rol, jugador1, jugador2, victorias_defensor, victorias_atacante, callback_volver):
+class FinDineroView:
+    def __init__(self, root, jugador1, jugador2, callback_volver):
         self.root = root
-        self.ganador_rol = ganador_rol
-        self.jugador1 = jugador1
-        self.jugador2 = jugador2
-        self.victorias_defensor = victorias_defensor
-        self.victorias_atacante = victorias_atacante
+        self.jugador1 = jugador1  # defensor
+        self.jugador2 = jugador2  # atacante
         self.callback_volver = callback_volver
 
-        if ganador_rol == "defensor":
-            actualizar_victorias(jugador1["nombre"], "defensor")
-        else:
-            actualizar_victorias(jugador2["nombre"], "atacante")
+        # El defensor gana la partida automaticamente
+        actualizar_victorias(jugador1["nombre"], "defensor")
 
         self.frame = tk.Frame(root, bg=COLOR_FONDO)
         self.frame.pack(fill="both", expand=True)
@@ -31,13 +26,6 @@ class FinPartidaView:
         self._construir_ui()
 
     def _construir_ui(self):
-        if self.ganador_rol == "defensor":
-            nombre_ganador = self.jugador1["nombre"]
-            color = COLOR_DEFENSOR
-        else:
-            nombre_ganador = self.jugador2["nombre"]
-            color = COLOR_ATACANTE
-
         tk.Label(
             self.frame,
             text="Fin de Partida",
@@ -48,10 +36,19 @@ class FinPartidaView:
 
         tk.Label(
             self.frame,
-            text=f"{nombre_ganador} gana la partida",
+            text=f"{self.jugador1['nombre']} gana la partida",
             font=("Georgia", 16, "bold"),
             bg=COLOR_FONDO,
-            fg=color
+            fg=COLOR_DEFENSOR
+        ).pack(pady=10)
+
+        tk.Label(
+            self.frame,
+            text=f"{self.jugador2['nombre']} se quedo sin dinero suficiente para continuar",
+            font=("Georgia", 12),
+            bg=COLOR_FONDO,
+            fg=COLOR_TEXTO,
+            wraplength=400
         ).pack(pady=10)
 
         panel = tk.Frame(self.frame, bg=COLOR_PANEL, padx=30, pady=20)
@@ -59,7 +56,7 @@ class FinPartidaView:
 
         tk.Label(
             panel,
-            text="Resultado Final",
+            text="Resultado",
             font=("Georgia", 14, "bold"),
             bg=COLOR_PANEL,
             fg=COLOR_ACENTO
@@ -70,7 +67,7 @@ class FinPartidaView:
 
         tk.Label(
             fila,
-            text=f"{self.jugador1['nombre']}\nDefensor\n{self.victorias_defensor} rondas",
+            text=f"{self.jugador1['nombre']}\nDefensor\nGanador",
             font=("Georgia", 13),
             bg=COLOR_PANEL,
             fg=COLOR_DEFENSOR
@@ -86,7 +83,7 @@ class FinPartidaView:
 
         tk.Label(
             fila,
-            text=f"{self.jugador2['nombre']}\nAtacante\n{self.victorias_atacante} rondas",
+            text=f"{self.jugador2['nombre']}\nAtacante\nSin fondos",
             font=("Georgia", 13),
             bg=COLOR_PANEL,
             fg=COLOR_ATACANTE
@@ -105,6 +102,3 @@ class FinPartidaView:
     def _volver(self):
         self.frame.destroy()
         self.callback_volver()
-
-    
-

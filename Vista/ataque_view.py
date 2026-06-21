@@ -6,29 +6,17 @@ from Clases.unidades import Soldado, Tanque, UnidadRapida
 from Clases.torres import TorreBasica, TorrePesada, TorreMagica
 from Clases.muro import Muro
 
-TAMANIO_CASILLA = 45
+TAMANIO_CASILLA = 50
 FILAS = 12
 COLUMNAS = 12
 
-def obtener_colores_faccion(faccion):
-    # Retorna color de torre, muro y base según la facción
-    if faccion == "Reino":
-        color_torre = "#c9a84c"
-        color_muro  = "#a07830"
-        color_base  = "#c9a84c"
-    elif faccion == "Oscura":
-        color_torre = "#7b2d8b"
-        color_muro  = "#4a1a5a"
-        color_base  = "#7b2d8b"
-    elif faccion == "Bosque":
-        color_torre = "#2d8b3b"
-        color_muro  = "#1a5a25"
-        color_base  = "#2d8b3b"
-    else:
-        color_torre = "#3498db"
-        color_muro  = "#7f8c8d"
-        color_base  = "#e74c3c"
-    return color_torre, color_muro, color_base
+COLOR_FONDO = "#1a0f1f"
+COLOR_PANEL = "#3d1530"
+COLOR_CASILLA = "#3d1530"
+COLOR_ZONA_ATAQUE = "#5e1f3d"
+COLOR_BORDE = "#5e1f3d"
+COLOR_ACENTO = "#9b4f7f"
+COLOR_TEXTO = "#e8d5e0"
 
 class AtaqueView:
     def __init__(self, root, mapa, jugador1, jugador2, faccion1, faccion2, vida_base, callback_combate, dinero_extra=0, dinero_defensor=500):
@@ -43,72 +31,66 @@ class AtaqueView:
         self.unidades = []
         self.seleccion = None
         self.dinero = dinero_extra if dinero_extra > 0 else 300
-        self.dinero_defensor = dinero_defensor  # guardamos el dinero del defensor para pasarlo al combate
+        self.dinero_defensor = dinero_defensor
 
         self.imagenes = {}
         self._cargar_imagenes()
         self.fila_base = 5
         self.columna_base = 1
 
-        self.frame = tk.Frame(root, bg="#1a1a2e")
+        self.frame = tk.Frame(root, bg=COLOR_FONDO)
         self.frame.pack(fill="both", expand=True)
         self._construir_ui()
 
     def _construir_ui(self):
-        # Título
         tk.Label(
             self.frame,
-            text=f"Fase de Ataque — {self.jugador2['nombre']}",
-            font=("Arial", 14, "bold"),
-            bg="#1a1a2e",
-            fg="#e74c3c"
+            text=f"Fase de Ataque - {self.jugador2['nombre']}",
+            font=("Georgia", 14, "bold"),
+            bg=COLOR_FONDO,
+            fg=COLOR_ACENTO
         ).pack(pady=10)
 
-        # Dinero disponible
         self.label_dinero = tk.Label(
             self.frame,
             text=f"Dinero: {self.dinero}",
-            font=("Arial", 12),
-            bg="#1a1a2e",
-            fg="white"
+            font=("Georgia", 12),
+            bg=COLOR_FONDO,
+            fg=COLOR_TEXTO
         )
         self.label_dinero.pack()
 
-        # Tienda de unidades
-        tienda = tk.Frame(self.frame, bg="#16213e", padx=10, pady=8)
+        tienda = tk.Frame(self.frame, bg=COLOR_PANEL, padx=10, pady=8)
         tienda.pack(fill="x", padx=20)
-        tk.Label(tienda, text="Unidades:", bg="#16213e", fg="white", font=("Arial", 11, "bold")).pack(side="left", padx=5)
+        tk.Label(tienda, text="Unidades:", bg=COLOR_PANEL, fg=COLOR_TEXTO, font=("Georgia", 11, "bold")).pack(side="left", padx=5)
 
-        tk.Button(tienda, text="Soldado $30", bg="#27ae60", fg="white", font=("Arial", 10),
+        tk.Button(tienda, text="Soldado $30", bg="#27ae60", fg="white", font=("Georgia", 10),
             command=lambda: self._seleccionar("soldado")).pack(side="left", padx=5)
-        tk.Button(tienda, text="Tanque $120", bg="#c0392b", fg="white", font=("Arial", 10),
+        tk.Button(tienda, text="Tanque $120", bg="#c0392b", fg="white", font=("Georgia", 10),
             command=lambda: self._seleccionar("tanque")).pack(side="left", padx=5)
-        tk.Button(tienda, text="Rapida $60", bg="#f39c12", fg="white", font=("Arial", 10),
+        tk.Button(tienda, text="Rapida $60", bg="#f39c12", fg="white", font=("Georgia", 10),
             command=lambda: self._seleccionar("rapida")).pack(side="left", padx=5)
 
-        # Label de selección actual
-        self.label_seleccion = tk.Label(tienda, text="Seleccion: ninguna", bg="#16213e", fg="#c9a84c", font=("Arial", 10))
+        self.label_seleccion = tk.Label(tienda, text="Seleccion: ninguna", bg=COLOR_PANEL, fg=COLOR_ACENTO, font=("Georgia", 10))
         self.label_seleccion.pack(side="left", padx=10)
 
-        # Canvas del mapa
         self.canvas = tk.Canvas(
             self.frame,
             width=COLUMNAS * TAMANIO_CASILLA,
             height=FILAS * TAMANIO_CASILLA,
-            bg="#2d2d44",
+            bg=COLOR_FONDO,
             highlightthickness=0
         )
         self.canvas.pack(pady=10)
         self.canvas.bind("<Button-1>", self._click_mapa)
         self.canvas.bind("<Button-3>", self._click_derecho)
 
-        # Botón para iniciar combate
         tk.Button(
             self.frame,
-            text="Iniciar Combate!",
-            font=("Arial", 12, "bold"),
-            bg="#e74c3c",
-            fg="white",
+            text="Iniciar Combate",
+            font=("Georgia", 12, "bold"),
+            bg=COLOR_ACENTO,
+            fg=COLOR_FONDO,
             command=self._iniciar_combate,
             padx=15, pady=8
         ).pack(pady=10)
@@ -116,7 +98,6 @@ class AtaqueView:
         self._dibujar_mapa()
 
     def _seleccionar(self, tipo):
-        # Guarda qué unidad quiere colocar el atacante
         self.seleccion = tipo
         self.label_seleccion.config(text=f"Seleccion: {tipo}")
 
@@ -134,7 +115,6 @@ class AtaqueView:
             messagebox.showwarning("Aviso", "Ya hay algo en esa casilla.")
             return
 
-        # Verificamos el costo
         if self.seleccion == "soldado":
             costo = 30
         elif self.seleccion == "tanque":
@@ -146,7 +126,6 @@ class AtaqueView:
             messagebox.showerror("Sin dinero", "No tienes suficiente dinero.")
             return
 
-        # Creamos la unidad según la selección
         if self.seleccion == "soldado":
             unidad = Soldado()
         elif self.seleccion == "tanque":
@@ -154,12 +133,34 @@ class AtaqueView:
         elif self.seleccion == "rapida":
             unidad = UnidadRapida()
 
-        # Guardamos posición y la ponemos en el mapa
         unidad.fila = fila
         unidad.columna = col
         self.unidades.append(unidad)
         self.mapa[fila][col] = unidad
         self.dinero -= costo
+        self.label_dinero.config(text=f"Dinero: {self.dinero}")
+        self._dibujar_mapa()
+
+    def _click_derecho(self, evento):
+        col = evento.x // TAMANIO_CASILLA
+        fila = evento.y // TAMANIO_CASILLA
+
+        objeto = self.mapa[fila][col]
+        if objeto is None:
+            return
+
+        if isinstance(objeto, Soldado):
+            costo = 30
+        elif isinstance(objeto, Tanque):
+            costo = 120
+        elif isinstance(objeto, UnidadRapida):
+            costo = 60
+        else:
+            return
+
+        self.mapa[fila][col] = None
+        self.unidades.remove(objeto)
+        self.dinero += costo
         self.label_dinero.config(text=f"Dinero: {self.dinero}")
         self._dibujar_mapa()
 
@@ -183,10 +184,7 @@ class AtaqueView:
                         usar_imagen = True
                         imagen = self.imagenes["base"]
                 elif objeto is None:
-                    if col >= COLUMNAS - 3:
-                        texto = ""  # zona de ataque
-                    else:
-                        texto = ""
+                    texto = ""
                 elif isinstance(objeto, Muro):
                     texto = "MUR"
                     if "muro" in self.imagenes:
@@ -223,19 +221,16 @@ class AtaqueView:
                         usar_imagen = True
                         imagen = self.imagenes["rapida"]
 
-                # Fondo del mapa
-                if fila == self.fila_base and col == self.columna_base:
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="#2d2d44", outline="#3d3d5c", width=1)
-                elif objeto is None and col >= COLUMNAS - 3:
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="#1a3a1a", outline="#3d3d5c", width=1)
+                if objeto is None and fila != self.fila_base and col >= COLUMNAS - 3:
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=COLOR_ZONA_ATAQUE, outline=COLOR_BORDE, width=1)
                 else:
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="#2d2d44", outline="#3d3d5c", width=1)
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=COLOR_CASILLA, outline=COLOR_BORDE, width=1)
 
                 if usar_imagen:
                     self.canvas.create_image(x1, y1, anchor="nw", image=imagen)
                 elif texto:
-                    self.canvas.create_text(x1+25, y1+25, text=texto, fill="white", font=("Arial", 7, "bold"))
-    
+                    self.canvas.create_text(x1+25, y1+25, text=texto, fill=COLOR_TEXTO, font=("Georgia", 7, "bold"))
+
     def _iniciar_combate(self):
         if not self.unidades:
             messagebox.showwarning("Aviso", "Debes colocar al menos una unidad.")
@@ -245,7 +240,6 @@ class AtaqueView:
 
     def _cargar_imagenes(self):
         from PIL import Image, ImageTk
-        import os
 
         if self.faccion1 == "Reino":
             prefijo_defensor = "reino"
@@ -263,7 +257,6 @@ class AtaqueView:
 
         self.imagenes = {}
 
-        # Cargamos imágenes de estructuras del defensor
         tipos_estructuras = ["muro", "torre_basica", "torre_pesada", "torre_magica", "base"]
         for tipo in tipos_estructuras:
             ruta = f"assets/imagenes/{prefijo_defensor}_{tipo}.png"
@@ -271,35 +264,9 @@ class AtaqueView:
                 img = Image.open(ruta).resize((50, 50), Image.NEAREST)
                 self.imagenes[tipo] = ImageTk.PhotoImage(img)
 
-        # Cargamos imágenes de unidades del atacante
         tipos_unidades = ["soldado", "tanque", "rapida"]
         for tipo in tipos_unidades:
             ruta = f"assets/imagenes/{prefijo_atacante}_{tipo}.png"
             if os.path.exists(ruta):
                 img = Image.open(ruta).resize((50, 50), Image.NEAREST)
                 self.imagenes[tipo] = ImageTk.PhotoImage(img)
-    def _click_derecho(self, evento):
-        # Elimina la unidad de la casilla y devuelve el dinero
-        col = evento.x // TAMANIO_CASILLA
-        fila = evento.y // TAMANIO_CASILLA
-
-        objeto = self.mapa[fila][col]
-        if objeto is None:
-            return  # no hay nada que eliminar
-
-        # Determinamos el costo según el tipo para devolverlo
-        if isinstance(objeto, Soldado):
-            costo = 30
-        elif isinstance(objeto, Tanque):
-            costo = 120
-        elif isinstance(objeto, UnidadRapida):
-            costo = 60
-        else:
-            return  # no es una unidad, no hacemos nada
-
-    # Eliminamos del mapa y de la lista de unidades
-        self.mapa[fila][col] = None
-        self.unidades.remove(objeto)
-        self.dinero += costo
-        self.label_dinero.config(text=f"Dinero: {self.dinero}")
-        self._dibujar_mapa()

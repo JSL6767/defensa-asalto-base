@@ -45,7 +45,19 @@
         {
             "nombre": "1",
             "contrasena": "1",
-            "victorias_defensor": 5,
+            "victorias_defensor": 13,
+            "victorias_atacante": 0
+        },
+        {
+            "nombre": "11",
+            "contrasena": "22",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
+        },
+        {
+            "nombre": "22",
+            "contrasena": "11",
+            "victorias_defensor": 0,
             "victorias_atacante": 0
         }
     ]
