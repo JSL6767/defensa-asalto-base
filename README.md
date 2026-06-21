@@ -10,7 +10,7 @@ Juego de estrategia por turnos en Python/Tkinter. Dos jugadores: uno defiende un
 
 ## Requisitos
 
-- Python 3 (en el desarrollo del proyecto se usó python 3.14.3)
+- Python 3 (en el desarrollo se usó python 3.14.3)
 - Pillow
 - Tkinter
 
@@ -32,6 +32,5 @@ py main.py
 ```
 
 opcion 2:
-ejecutarlo normalmente, si estás en visual studio code
+ejecutarlo normalmente, si estás en visual studio code instala python debugger y ejecuta
 
-En sistemas Linux/Mac usar `python3 main.py`.

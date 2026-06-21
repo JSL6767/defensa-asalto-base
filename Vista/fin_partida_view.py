@@ -1,9 +1,9 @@
 import tkinter as tk
 from sistema_archivos import actualizar_victorias
 import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))   #permite importar desde la raiz del proyecto
 
-COLOR_FONDO = "#1a0f1f"
+COLOR_FONDO = "#1a0f1f"                                #colores de la paleta vino tinto y morado
 COLOR_PANEL = "#3d1530"
 COLOR_ACENTO = "#9b4f7f"
 COLOR_TEXTO = "#e8d5e0"
@@ -12,26 +12,26 @@ COLOR_ATACANTE = "#c9596f"
 
 class FinPartidaView:
     def __init__(self, root, ganador_rol, jugador1, jugador2, victorias_defensor, victorias_atacante, callback_volver):
-        self.root = root
-        self.ganador_rol = ganador_rol
-        self.jugador1 = jugador1
-        self.jugador2 = jugador2
-        self.victorias_defensor = victorias_defensor
-        self.victorias_atacante = victorias_atacante
-        self.callback_volver = callback_volver
+        self.root = root                                   #ventana principal
+        self.ganador_rol = ganador_rol                     #rol que gano la partida
+        self.jugador1 = jugador1                           #defensor
+        self.jugador2 = jugador2                           #atacante
+        self.victorias_defensor = victorias_defensor       #rondas ganadas por el defensor
+        self.victorias_atacante = victorias_atacante       #rondas ganadas por el atacante
+        self.callback_volver = callback_volver             #funcion para volver al menu
 
-        if ganador_rol == "defensor":
+        if ganador_rol == "defensor":                       #suma la victoria al jugador que gano
             actualizar_victorias(jugador1["nombre"], "defensor")
         else:
             actualizar_victorias(jugador2["nombre"], "atacante")
 
-        self.frame = tk.Frame(root, bg=COLOR_FONDO)
+        self.frame = tk.Frame(root, bg=COLOR_FONDO)         #crea el frame principal
         self.frame.pack(fill="both", expand=True)
 
         self._construir_ui()
 
     def _construir_ui(self):
-        if self.ganador_rol == "defensor":
+        if self.ganador_rol == "defensor":                   #determina nombre y color del ganador
             nombre_ganador = self.jugador1["nombre"]
             color = COLOR_DEFENSOR
         else:
@@ -54,7 +54,7 @@ class FinPartidaView:
             fg=color
         ).pack(pady=10)
 
-        panel = tk.Frame(self.frame, bg=COLOR_PANEL, padx=30, pady=20)
+        panel = tk.Frame(self.frame, bg=COLOR_PANEL, padx=30, pady=20)   #panel del resultado final
         panel.pack(pady=20, padx=40, fill="x")
 
         tk.Label(
@@ -65,7 +65,7 @@ class FinPartidaView:
             fg=COLOR_ACENTO
         ).pack(pady=5)
 
-        fila = tk.Frame(panel, bg=COLOR_PANEL)
+        fila = tk.Frame(panel, bg=COLOR_PANEL)               #fila con el marcador de ambos jugadores
         fila.pack(pady=10)
 
         tk.Label(
@@ -103,8 +103,8 @@ class FinPartidaView:
         ).pack(pady=30)
 
     def _volver(self):
-        self.frame.destroy()
-        self.callback_volver()
+        self.frame.destroy()                                  #cierra esta pantalla
+        self.callback_volver()                                #vuelve al menu principal
 
     
 

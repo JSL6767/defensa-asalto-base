@@ -31,15 +31,13 @@ class MapaView:
         self.vida_base = 500
         self.seleccion = None
         self.dinero = 200 + dinero_extra
-        self.torre_resaltada = None  # guarda (fila, col, alcance) de la última torre colocada
+        self.torre_resaltada = None
         self.imagenes = {}
         self._cargar_imagenes()
 
         self.frame = tk.Frame(root, bg=COLOR_FONDO)
         self.frame.pack(fill="both", expand=True)
         self._construir_ui()
-
-        
 
     def _construir_ui(self):
         tk.Label(
@@ -60,6 +58,14 @@ class MapaView:
         self.label_dinero.pack()
 
         self._construir_tienda()
+
+        tk.Label(
+            self.frame,
+            text="Clic izquierdo para añadir, clic derecho para borrar",
+            font=("Georgia", 9),
+            bg=COLOR_FONDO,
+            fg="#9b7d8f"
+        ).pack(pady=(2, 0))
 
         self.canvas = tk.Canvas(
             self.frame,
@@ -148,7 +154,6 @@ class MapaView:
         self.dinero -= costo
         self.label_dinero.config(text=f"Dinero: {self.dinero}")
 
-        # Si es una torre, guardamos su posicion y alcance para resaltarlo en verde
         if self.seleccion in ["torre_basica", "torre_pesada", "torre_magica"]:
             self.torre_resaltada = (fila, col, objeto.alcance)
         else:
@@ -178,7 +183,6 @@ class MapaView:
         else:
             costo = 0
 
-        # Si borramos la torre que tenia el alcance resaltado, quitamos el resaltado
         if self.torre_resaltada and self.torre_resaltada[0] == fila and self.torre_resaltada[1] == col:
             self.torre_resaltada = None
 
@@ -190,7 +194,6 @@ class MapaView:
     def _dibujar_mapa(self):
         self.canvas.delete("all")
 
-        # Primero dibujamos el resaltado de alcance si hay una torre activa
         casillas_resaltadas = set()
         if self.torre_resaltada:
             fila_t, col_t, alcance = self.torre_resaltada
@@ -209,7 +212,7 @@ class MapaView:
                 usar_imagen = False
                 imagen = None
                 texto = ""
-    
+
                 if fila == self.fila_base and col == self.columna_base:
                     texto = "BASE"
                     if "base" in self.imagenes:
@@ -238,7 +241,6 @@ class MapaView:
                             usar_imagen = True
                             imagen = self.imagenes["torre_magica"]
 
-                # Color de fondo: verde si está en el alcance resaltado
                 if (fila, col) in casillas_resaltadas:
                     color_fondo = "#2d6b3d"
                 else:

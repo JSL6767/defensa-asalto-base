@@ -75,6 +75,15 @@ class CombateView:
         self.log = tk.Text(columna_controles, height=15, width=28, bg=COLOR_PANEL, fg=COLOR_TEXTO, font=("Georgia", 9), state="disabled", wrap="word")
         self.log.pack(pady=10)
 
+        tk.Label(
+            columna_controles,
+            text="Habilidades: A=Tbasica  S=Tpesada  D=Tmagica\nJ=Soldado  K=Tanque  L=Rapida",
+            font=("Georgia", 8),
+            bg=COLOR_FONDO,
+            fg="#9b7d8f",
+            justify="left"
+        ).pack(pady=(0, 10))
+
         self.btn_iniciar = tk.Button(
             columna_controles, text="Iniciar Combate", font=("Georgia", 12, "bold"),
             bg=COLOR_ACENTO, fg=COLOR_FONDO, command=self._iniciar_combate, padx=15, pady=8
@@ -343,8 +352,6 @@ class CombateView:
             self.combate_activo = False
             self._log("Todas las unidades eliminadas - Gana el defensor")
 
-            # Si el atacante se quedo sin dinero suficiente para seguir
-            # comprando unidades, termina la partida completa de inmediato
             if self.dinero_atacante < 30:
                 self._log("El atacante se quedo sin dinero suficiente!")
                 self.frame.destroy()

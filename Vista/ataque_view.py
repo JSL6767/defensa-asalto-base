@@ -74,6 +74,14 @@ class AtaqueView:
         self.label_seleccion = tk.Label(tienda, text="Seleccion: ninguna", bg=COLOR_PANEL, fg=COLOR_ACENTO, font=("Georgia", 10))
         self.label_seleccion.pack(side="left", padx=10)
 
+        tk.Label(
+            self.frame,
+            text="Clic izquierdo para añadir, clic derecho para borrar",
+            font=("Georgia", 9),
+            bg=COLOR_FONDO,
+            fg="#9b7d8f"
+        ).pack(pady=(2, 0))
+
         self.canvas = tk.Canvas(
             self.frame,
             width=COLUMNAS * TAMANIO_CASILLA,

@@ -1,9 +1,9 @@
 import tkinter as tk
 from sistema_archivos import actualizar_victorias
 import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))   #permite importar desde la raiz del proyecto
 
-COLOR_FONDO = "#1a0f1f"
+COLOR_FONDO = "#1a0f1f"                                #colores de la paleta vino tinto y morado
 COLOR_PANEL = "#3d1530"
 COLOR_ACENTO = "#9b4f7f"
 COLOR_TEXTO = "#e8d5e0"
@@ -12,15 +12,14 @@ COLOR_ATACANTE = "#c9596f"
 
 class FinDineroView:
     def __init__(self, root, jugador1, jugador2, callback_volver):
-        self.root = root
-        self.jugador1 = jugador1  # defensor
-        self.jugador2 = jugador2  # atacante
-        self.callback_volver = callback_volver
+        self.root = root                                  #ventana principal
+        self.jugador1 = jugador1                           #defensor, gana la partida
+        self.jugador2 = jugador2                           #atacante, se quedo sin dinero
+        self.callback_volver = callback_volver             #funcion para volver al menu
 
-        # El defensor gana la partida automaticamente
-        actualizar_victorias(jugador1["nombre"], "defensor")
+        actualizar_victorias(jugador1["nombre"], "defensor")   #suma la victoria automatica al defensor
 
-        self.frame = tk.Frame(root, bg=COLOR_FONDO)
+        self.frame = tk.Frame(root, bg=COLOR_FONDO)        #crea el frame principal
         self.frame.pack(fill="both", expand=True)
 
         self._construir_ui()
@@ -36,7 +35,7 @@ class FinDineroView:
 
         tk.Label(
             self.frame,
-            text=f"{self.jugador1['nombre']} gana la partida",
+            text=f"{self.jugador1['nombre']} gana la partida",     #anuncia el ganador
             font=("Georgia", 16, "bold"),
             bg=COLOR_FONDO,
             fg=COLOR_DEFENSOR
@@ -44,14 +43,14 @@ class FinDineroView:
 
         tk.Label(
             self.frame,
-            text=f"{self.jugador2['nombre']} se quedo sin dinero suficiente para continuar",
+            text=f"{self.jugador2['nombre']} se quedo sin dinero suficiente para continuar",   #explica el motivo
             font=("Georgia", 12),
             bg=COLOR_FONDO,
             fg=COLOR_TEXTO,
             wraplength=400
         ).pack(pady=10)
 
-        panel = tk.Frame(self.frame, bg=COLOR_PANEL, padx=30, pady=20)
+        panel = tk.Frame(self.frame, bg=COLOR_PANEL, padx=30, pady=20)   #panel del resultado
         panel.pack(pady=20, padx=40, fill="x")
 
         tk.Label(
@@ -62,7 +61,7 @@ class FinDineroView:
             fg=COLOR_ACENTO
         ).pack(pady=5)
 
-        fila = tk.Frame(panel, bg=COLOR_PANEL)
+        fila = tk.Frame(panel, bg=COLOR_PANEL)              #fila con ambos jugadores
         fila.pack(pady=10)
 
         tk.Label(
@@ -100,5 +99,5 @@ class FinDineroView:
         ).pack(pady=30)
 
     def _volver(self):
-        self.frame.destroy()
-        self.callback_volver()
+        self.frame.destroy()                                  #cierra esta pantalla
+        self.callback_volver()                                #vuelve al menu principal

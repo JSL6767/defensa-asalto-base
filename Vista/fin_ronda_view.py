@@ -1,6 +1,6 @@
 import tkinter as tk
 
-COLOR_FONDO = "#1a0f1f"
+COLOR_FONDO = "#1a0f1f"                                #colores de la paleta vino tinto y morado
 COLOR_PANEL = "#3d1530"
 COLOR_ACENTO = "#9b4f7f"
 COLOR_TEXTO = "#e8d5e0"
@@ -9,15 +9,15 @@ COLOR_ATACANTE = "#c9596f"
 
 class FinRondaView:
     def __init__(self, root, ganador_ronda, jugador1, jugador2, victorias_defensor, victorias_atacante, callback_continuar):
-        self.root = root
-        self.ganador_ronda = ganador_ronda
-        self.jugador1 = jugador1
-        self.jugador2 = jugador2
-        self.victorias_defensor = victorias_defensor
-        self.victorias_atacante = victorias_atacante
-        self.callback_continuar = callback_continuar
+        self.root = root                                  #ventana principal
+        self.ganador_ronda = ganador_ronda                #quien gano la ronda
+        self.jugador1 = jugador1                          #defensor
+        self.jugador2 = jugador2                          #atacante
+        self.victorias_defensor = victorias_defensor      #rondas ganadas por el defensor
+        self.victorias_atacante = victorias_atacante      #rondas ganadas por el atacante
+        self.callback_continuar = callback_continuar      #funcion para seguir con la siguiente ronda
 
-        self.frame = tk.Frame(root, bg=COLOR_FONDO)
+        self.frame = tk.Frame(root, bg=COLOR_FONDO)       #crea el frame principal
         self.frame.pack(fill="both", expand=True)
 
         self._construir_ui()
@@ -31,7 +31,7 @@ class FinRondaView:
             fg=COLOR_ACENTO
         ).pack(pady=30)
 
-        if self.ganador_ronda == "defensor":
+        if self.ganador_ronda == "defensor":                #arma el texto segun quien gano
             nombre_ganador = self.jugador1["nombre"]
             texto = f"{nombre_ganador} defiende la base"
         else:
@@ -46,7 +46,7 @@ class FinRondaView:
             fg=COLOR_TEXTO
         ).pack(pady=10)
 
-        panel = tk.Frame(self.frame, bg=COLOR_PANEL, padx=30, pady=20)
+        panel = tk.Frame(self.frame, bg=COLOR_PANEL, padx=30, pady=20)   #panel del marcador
         panel.pack(pady=20, padx=40, fill="x")
 
         tk.Label(
@@ -57,7 +57,7 @@ class FinRondaView:
             fg=COLOR_ACENTO
         ).pack(pady=5)
 
-        fila = tk.Frame(panel, bg=COLOR_PANEL)
+        fila = tk.Frame(panel, bg=COLOR_PANEL)               #fila con el marcador de ambos jugadores
         fila.pack(pady=10)
 
         tk.Label(
@@ -95,11 +95,5 @@ class FinRondaView:
         ).pack(pady=30)
 
     def _continuar(self):
-        self.frame.destroy()
-        self.callback_continuar()
-
-
-
-
-        
-        
+        self.frame.destroy()                                  #cierra esta pantalla
+        self.callback_continuar()                             #pasa a la siguiente ronda

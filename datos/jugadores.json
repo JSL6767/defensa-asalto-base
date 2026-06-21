@@ -59,6 +59,12 @@
             "contrasena": "11",
             "victorias_defensor": 0,
             "victorias_atacante": 0
+        },
+        {
+            "nombre": "jugador",
+            "contrasena": "asdf",
+            "victorias_defensor": 0,
+            "victorias_atacante": 0
         }
     ]
 }
